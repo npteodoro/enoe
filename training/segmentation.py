@@ -3,29 +3,15 @@ import os
 import torch
 from torch.utils.data import DataLoader
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
-from data.loaders.segmentation_loader import RiverSegmentationDataset
+from data.loaders.segmentation import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
-from utils.logger import get_logger, log_config, log_model_info
+from utils.logger import init_logger
 from utils.config import load_config, get_model_config
 import torchvision.transforms as transforms
 
-def main():
-    # Load configuration using our config helper
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    config = load_config(os.path.join(project_root, "configs/config_segmentation.yaml"))
+def main(config=None, writer=None, device=None):
 
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
-
-    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
-
-    # Setup TensorBoard logger with a subfolder for the current encoder
-    log_dir = os.path.join(config.get("log_dir", "logs/training"), "training", encoder_name)
-    os.makedirs(log_dir, exist_ok=True)
-    writer = get_logger(log_dir)
-
-    # Log entire configuration and model info
-    log_config(writer, config)
-    log_model_info(writer, encoder_name)
 
     # Create dataset and dataloader
     dataset_config = config["dataset"]
@@ -98,11 +84,21 @@ def main():
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, IoU: {iou:.4f}, Dice Loss: {dice:.4f}")
 
     # Save model checkpoint in a subfolder for the current encoder
-    model_dir = os.path.join(project_root, "models", "segmentation", encoder_name)
+    model_dir = os.path.join(config["root_dir"], "models", "segmentation", encoder_name)
     os.makedirs(model_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(model_dir, f"{encoder_name}.pth"))
-    writer.close()
     print("Training complete and model saved.")
 
 if __name__ == "__main__":
-    main()
+    # Load configuration using our config helper
+    config = load_config(job="evaluantion", step="segmentation")
+
+    # Setup TensorBoard logger for evaluation in a dedicated subfolder
+    writer = init_logger(config=config)
+
+    # Default is cuda if available, else cpu
+    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
+
+    main(config=config, writer=writer, device=device)
+
+    writer.close()
