@@ -16,7 +16,7 @@ def main():
 
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
 
-    device = torch.device(config.get("device", "cpu"))
+    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
 
     # Setup TensorBoard logger with a subfolder for the current encoder
     log_dir = os.path.join(config.get("log_dir", "logs/training"), "training", encoder_name)
@@ -106,4 +106,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

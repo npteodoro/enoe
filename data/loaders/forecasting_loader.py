@@ -45,14 +45,14 @@ class ForecastingDataset(Dataset):
             images.append(image)
         # Stack images to create a sequence: [T, C, H, W]
         sequence = torch.stack(images, dim=0)
-        
+
         # Target level is from the next record after the sequence
         target_level_str = self.data.iloc[idx + self.time_window]["level"]
-        
+
         # Map string level to numeric value
         level_map = {'low': 0, 'medium': 1, 'high': 2, 'flood': 3}
         target_level = level_map.get(target_level_str.lower(), 0)  # Default to 0 if not found
-        
+
         target = torch.tensor(target_level, dtype=torch.long)
         return sequence, target
 
@@ -63,15 +63,15 @@ def get_forecasting_dataloader(csv_file, rgb_folder, batch_size=16, time_window=
 class ForecastingModel(nn.Module):
     def __init__(self, time_window=7, num_classes=4, cnn_output_size=256, hidden_size=128):
         super().__init__()
-        
+
         # CNN feature extractor (MobileNetV3 Small)
         mobilenet = mobilenet_v3_small(pretrained=True)
         # Remove the classifier
         self.feature_extractor = nn.Sequential(*list(mobilenet.children())[:-1])
-        
+
         # Get the correct number of output features
         self.fc = nn.Linear(mobilenet.classifier[0].in_features, cnn_output_size)
-        
+
         # RNN for sequence processing
         self.gru = nn.GRU(
             input_size=cnn_output_size,
@@ -80,6 +80,6 @@ class ForecastingModel(nn.Module):
             batch_first=True,
             dropout=0.2
         )
-        
+
         # Final classifier
         self.classifier = nn.Linear(hidden_size, num_classes)

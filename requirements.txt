@@ -1,7 +1,8 @@
+albumentations
+pandas
+Pillow
+pyyaml
+segmentation-models-pytorch
+tensorboard
 torch
 torchvision
-segmentation-models-pytorch
-pandas
-pyyaml
-Pillow
-

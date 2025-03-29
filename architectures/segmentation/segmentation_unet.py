@@ -23,4 +23,3 @@ def get_unet_mobilenet_v3(in_channels=3,
         classes=classes,
     )
     return model
-

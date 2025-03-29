@@ -14,7 +14,7 @@ def main():
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     config = load_config(os.path.join(project_root, "configs/config_classification.yaml"))
 
-    device = torch.device(config.get("device", "cpu"))
+    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
 
     # Get model config details
     model_config = config["model"]
@@ -69,20 +69,20 @@ def main():
         model.train()
         running_loss = 0.0
         correct = 0
-        
+
         # Current code has incorrect unpacking - should handle masks too
         if use_mask:
             for (images, masks, labels) in dataloader:
                 images = images.to(device)
                 masks = masks.to(device)
                 labels = labels.to(device)
-                
+
                 optimizer.zero_grad()
                 outputs = model(images, masks)  # Pass both images and masks
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
-                
+
                 running_loss += loss.item() * images.size(0)
                 _, preds = torch.max(outputs, 1)
                 correct += torch.sum(preds == labels).item()
@@ -93,13 +93,13 @@ def main():
             for (images, _, labels) in dataloader:  # Ignore masks
                 images = images.to(device)
                 labels = labels.to(device)
-                
+
                 optimizer.zero_grad()
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
-                
+
                 running_loss += loss.item() * images.size(0)
                 _, preds = torch.max(outputs, 1)
                 correct += torch.sum(preds == labels).item()
@@ -122,4 +122,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -20,4 +20,3 @@ def get_val_augmentations(image_size=(256,256)):
                     std=(0.229, 0.224, 0.225)),
         ToTensorV2()
     ])
-

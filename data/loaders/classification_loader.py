@@ -13,7 +13,7 @@ class ClassificationDataset(Dataset):
         self.rgb_folder = os.path.join(root_dir, rgb_folder)
         self.mask_folder = os.path.join(root_dir, mask_folder) if mask_folder else None
         self.image_size = image_size
-        self.transform = transform     
+        self.transform = transform
         # Define default transform if not provided
         if self.transform is None:
             self.transform = transforms.Compose([
@@ -34,10 +34,10 @@ class ClassificationDataset(Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(self.rgb_folder, os.path.basename(self.data_frame.iloc[idx]['path']))
         mask_name = os.path.join(self.mask_folder, os.path.basename(self.data_frame.iloc[idx]['path'])) if self.mask_folder else None
-        
+
         image = Image.open(img_name).convert("RGB")
         mask = Image.open(mask_name).convert("L") if mask_name else None
-        
+
         # Convert string labels to integers
         label_str = self.data_frame.iloc[idx]['level']
         label_map = {'low': 0, 'medium': 1, 'high': 2, 'flood': 3}
@@ -45,7 +45,7 @@ class ClassificationDataset(Dataset):
 
         if self.transform:
             image = self.transform(image)
-        
+
         if mask is not None and self.mask_transform:
             mask = self.mask_transform(mask)
 
@@ -54,4 +54,3 @@ class ClassificationDataset(Dataset):
 def get_classification_dataloader(csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", batch_size=32, shuffle=True, num_workers=4, transform=None):
     dataset = ClassificationDataset(csv_file, root_dir, rgb_folder, mask_folder, transform)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-

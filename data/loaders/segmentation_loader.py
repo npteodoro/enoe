@@ -30,7 +30,7 @@ class RiverSegmentationDataset(Dataset):
         return len(self.data_frame)
 
     def __getitem__(self, idx):
-        
+
         img_name = os.path.join(self.root_dir, self.rgb_folder, os.path.basename(self.data_frame.iloc[idx]['path']))
         mask_name = os.path.join(self.root_dir, self.mask_folder, os.path.basename(self.data_frame.iloc[idx]['path']))
 
@@ -45,4 +45,3 @@ class RiverSegmentationDataset(Dataset):
         mask = (mask > 0.5).float()
 
         return image, mask
-
