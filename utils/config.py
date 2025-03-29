@@ -1,10 +1,29 @@
 # utils/config.py
 import yaml
+import os
 
-def load_config(config_path):
+def load_config(job="", step="", config_path=None):
     """Load and return the configuration from a YAML file."""
+
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    if config_path is None:
+        config_path = os.path.join(root_dir, "configs/config.yaml")
+
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
+
+    if step:
+        # Check if the step exists in the config
+        if step not in config:
+            raise ValueError(f"Configuration for step '{step}' not found in {config_path}.")
+        config = config[step]
+
+    # Register root_dir
+    config["root_dir"] = root_dir
+    config["job"] = job
+    config["step"] = step
+
     return config
 
 def get_model_config(config):

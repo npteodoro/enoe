@@ -4,27 +4,27 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
-import torch.nn as nn
 
 class ClassificationDataset(Dataset):
     def __init__(self, csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", image_size=(224, 224), transform=None):
         self.data_frame = pd.read_csv(csv_file)
         self.root_dir = root_dir
-        self.rgb_folder = os.path.join(root_dir, rgb_folder)
-        self.mask_folder = os.path.join(root_dir, mask_folder) if mask_folder else None
+        self.rgb_folder = rgb_folder
+        self.mask_folder = mask_folder
         self.image_size = image_size
         self.transform = transform
-        # Define default transform if not provided
+        # Define a basic transform if none provided (resize and ToTensor)
         if self.transform is None:
             self.transform = transforms.Compose([
-                transforms.Resize((224, 224)),
+                transforms.Resize(self.image_size),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
             ])
+        # For mask, we will only resize and convert to tensor (later threshold it)
         if self.mask_folder:
             self.mask_transform = transforms.Compose([
-                transforms.Resize(224),
+                transforms.Resize(self.image_size),
                 transforms.ToTensor()
             ])
 
@@ -32,9 +32,12 @@ class ClassificationDataset(Dataset):
         return len(self.data_frame)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(self.rgb_folder, os.path.basename(self.data_frame.iloc[idx]['path']))
-        mask_name = os.path.join(self.mask_folder, os.path.basename(self.data_frame.iloc[idx]['path'])) if self.mask_folder else None
+        img_name = os.path.join(self.root_dir, self.rgb_folder, \
+                                os.path.basename(self.data_frame.iloc[idx]['path']))
+        mask_name = os.path.join(self.root_dir, self.mask_folder, \
+                                 os.path.basename(self.data_frame.iloc[idx]['path'])) if self.mask_folder else None
 
+        # Open images
         image = Image.open(img_name).convert("RGB")
         mask = Image.open(mask_name).convert("L") if mask_name else None
 
@@ -43,6 +46,7 @@ class ClassificationDataset(Dataset):
         label_map = {'low': 0, 'medium': 1, 'high': 2, 'flood': 3}
         label = label_map.get(label_str.lower(), 0)
 
+        # Apply transforms
         if self.transform:
             image = self.transform(image)
 
@@ -51,6 +55,7 @@ class ClassificationDataset(Dataset):
 
         return image, mask, label
 
-def get_classification_dataloader(csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", batch_size=32, shuffle=True, num_workers=4, transform=None):
+def get_classification_dataloader(csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", \
+                                  batch_size=32, shuffle=True, num_workers=4, transform=None):
     dataset = ClassificationDataset(csv_file, root_dir, rgb_folder, mask_folder, transform)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

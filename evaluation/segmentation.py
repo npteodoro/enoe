@@ -4,26 +4,14 @@ import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
-from data.loaders.segmentation_loader import RiverSegmentationDataset
+from data.loaders.segmentation import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
-from utils.logger import get_logger, log_config, log_model_info
+from utils.logger import init_logger
 from utils.config import load_config, get_model_config
 
-def main():
-    # Load configuration
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    config = load_config(os.path.join(project_root, "configs/config_segmentation.yaml"))
+def main(config=None, writer=None, device=None):
+
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
-    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
-
-    # Setup logger for evaluation in a dedicated folder (e.g., logs/evaluation/<encoder_name>)
-    eval_log_dir = os.path.join(config.get("log_dir", "logs"), "evaluation", "segmentation", encoder_name)
-    os.makedirs(eval_log_dir, exist_ok=True)
-    writer = get_logger(eval_log_dir)
-
-    # Log configuration and model info
-    log_config(writer, config)
-    log_model_info(writer, encoder_name)
 
     # Create dataset and dataloader for evaluation
     dataset_config = config["dataset"]
@@ -92,7 +80,17 @@ def main():
     print(f"Average IoU: {avg_iou:.4f}, Average Dice Loss: {avg_dice:.4f}")
     writer.add_scalar("Eval/Avg_IoU", avg_iou)
     writer.add_scalar("Eval/Avg_DiceLoss", avg_dice)
-    writer.close()
 
 if __name__ == "__main__":
-    main()
+    # Load configuration using our config helper
+    config = load_config(job="evaluantion", step="segmentation")
+
+    # Setup TensorBoard logger for evaluation in a dedicated subfolder
+    writer = init_logger(config=config)
+
+    # Default is cuda if available, else cpu
+    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
+
+    main(config=config, writer=writer, device=device)
+
+    writer.close()

@@ -4,31 +4,17 @@ import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from architectures.classification.classifier_dual_input import get_dual_input_model
-from data.loaders.classification_loader import ClassificationDataset, get_classification_dataloader
-from utils.logger import get_logger, log_config, log_model_info
+from data.loaders.classification import get_classification_dataloader
+from utils.logger import init_logger
 from utils.config import load_config
 
-def main():
-    # Load configuration from YAML file
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    config = load_config(os.path.join(project_root, "configs/config_classification.yaml"))
-
-    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
+def main(config=None, writer=None, device=None):
 
     # Extract model configuration details
     model_config = config["model"]
     encoder_name = model_config.get("encoder_name", "mobilenetv3_small_classifier")
     num_classes = model_config.get("num_classes", 4)
     use_mask = model_config.get("use_mask", False)  # Add this line
-
-    # Setup TensorBoard logger for evaluation in a dedicated subfolder
-    eval_log_dir = os.path.join(config.get("log_dir", "logs"), "evaluation", "classification", encoder_name)
-    os.makedirs(eval_log_dir, exist_ok=True)
-    writer = get_logger(eval_log_dir)
-
-    # Log configuration and model info
-    log_config(writer, config)
-    log_model_info(writer, encoder_name)
 
     # Create dataset and dataloader
     dataset_config = config["dataset"]
@@ -89,7 +75,17 @@ def main():
     accuracy = total_correct / total_samples
     print(f"Classification Accuracy: {accuracy:.4f}")
     writer.add_scalar("Eval/Accuracy", accuracy)
-    writer.close()
 
 if __name__ == "__main__":
-    main()
+    # Load configuration using our config helper
+    config = load_config(job="evaluantion", step="classification")
+
+    # Setup TensorBoard logger for evaluation in a dedicated subfolder
+    writer = init_logger(config=config)
+
+    # Default is cuda if available, else cpu
+    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
+
+    main(config=config, writer=writer, device=device)
+
+    writer.close()

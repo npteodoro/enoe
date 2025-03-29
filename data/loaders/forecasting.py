@@ -9,10 +9,11 @@ from torchvision.models import mobilenet_v3_small
 import torch.nn as nn
 
 class ForecastingDataset(Dataset):
-    def __init__(self, csv_file, rgb_folder, time_window=7, transform=None):
+    def __init__(self, csv_file, root_dir, rgb_folder="rgb", time_window=7, transform=None):
         """
         Args:
             csv_file (str): Path to CSV file with columns "path", "timestamp", "level".
+            root_dir (str): Directory with all the images.
             rgb_folder (str): Folder containing RGB images.
             time_window (int): Number of consecutive images to use as input.
             transform: Transformations to apply to each image.
@@ -20,6 +21,7 @@ class ForecastingDataset(Dataset):
         self.data = pd.read_csv(csv_file)
         # Ensure the data is sorted by timestamp
         self.data = self.data.sort_values(by="datetime").reset_index(drop=True)
+        self.root_dir = root_dir
         self.rgb_folder = rgb_folder
         self.time_window = time_window
         self.transform = transform
@@ -39,7 +41,7 @@ class ForecastingDataset(Dataset):
         images = []
         for i in range(self.time_window):
             row = self.data.iloc[idx + i]
-            img_path = os.path.join(self.rgb_folder, os.path.basename(row["path"]))
+            img_path = os.path.join(self.root_dir, self.rgb_folder, os.path.basename(row["path"]))
             image = Image.open(img_path).convert("RGB")
             image = self.transform(image)
             images.append(image)
@@ -56,8 +58,8 @@ class ForecastingDataset(Dataset):
         target = torch.tensor(target_level, dtype=torch.long)
         return sequence, target
 
-def get_forecasting_dataloader(csv_file, rgb_folder, batch_size=16, time_window=7, num_workers=4):
-    dataset = ForecastingDataset(csv_file, rgb_folder, time_window=time_window)
+def get_forecasting_dataloader(csv_file, root_dir, rgb_folder, batch_size=16, time_window=7, num_workers=4):
+    dataset = ForecastingDataset(csv_file, root_dir, rgb_folder, time_window=time_window)
     return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
 class ForecastingModel(nn.Module):

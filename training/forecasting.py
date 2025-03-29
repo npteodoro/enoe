@@ -3,26 +3,18 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from data.loaders.forecasting_loader import get_forecasting_dataloader
+from data.loaders.forecasting import get_forecasting_dataloader
 from architectures.forecasting.forecasting_rnn import ForecastingCNN_GRU
-from utils.logger import get_logger, log_config
+from utils.logger import init_logger
 from utils.config import load_config
-import torchvision.transforms as transforms
 
-def main():
-    config = load_config("configs/config_forecasting.yaml")
-    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
-
-    # Setup TensorBoard logger
-    log_dir = config["training"]["log_dir"]
-    os.makedirs(log_dir, exist_ok=True)
-    writer = get_logger(log_dir)
-    log_config(writer, config)
+def main(config=None, writer=None, device=None):
 
     # Create forecasting dataloader
     dataset_config = config["dataset"]
     dataloader = get_forecasting_dataloader(
         csv_file=dataset_config["csv_file"],
+        root_dir=dataset_config["root_dir"],
         rgb_folder=dataset_config["rgb_folder"],
         batch_size=config["training"]["batch_size"],
         time_window=dataset_config["time_window"],
@@ -64,11 +56,21 @@ def main():
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}")
 
     # Save the forecasting model checkpoint
-    model_dir = "models/forecasting"
+    model_dir = os.path.join(config["root_dir"], "models", "forecasting")
     os.makedirs(model_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(model_dir, "forecasting_cnn_gru.pth"))
-    writer.close()
     print("Forecasting model training complete and saved.")
 
 if __name__ == "__main__":
-    main()
+    # Load configuration using our config helper
+    config = load_config(job="evaluantion", step="forecasting")
+
+    # Setup TensorBoard logger for evaluation in a dedicated subfolder
+    writer = init_logger(config=config)
+
+    # Default is cuda if available, else cpu
+    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
+
+    main(config=config, writer=writer, device=device)
+
+    writer.close()

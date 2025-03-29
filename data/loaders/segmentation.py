@@ -1,4 +1,3 @@
-# utils/dataset_utils.py
 import os
 import pandas as pd
 from PIL import Image
@@ -7,7 +6,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 class RiverSegmentationDataset(Dataset):
-    def __init__(self, csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", image_size=(256, 256), transform=None):
+    def __init__(self, csv_file, root_dir="dataset", rgb_folder="rgb", mask_folder="mask", image_size=(256, 256), transform=None):
         self.data_frame = pd.read_csv(csv_file)
         self.root_dir = root_dir
         self.rgb_folder = rgb_folder
@@ -21,26 +20,30 @@ class RiverSegmentationDataset(Dataset):
                 transforms.ToTensor(),
             ])
         # For mask, we will only resize and convert to tensor (later threshold it)
-        self.mask_transform = transforms.Compose([
-            transforms.Resize(self.image_size),
-            transforms.ToTensor(),
-        ])
+        if self.mask_folder:
+            self.mask_transform = transforms.Compose([
+                transforms.Resize(self.image_size),
+                transforms.ToTensor()
+            ])
 
     def __len__(self):
         return len(self.data_frame)
 
     def __getitem__(self, idx):
-
-        img_name = os.path.join(self.root_dir, self.rgb_folder, os.path.basename(self.data_frame.iloc[idx]['path']))
-        mask_name = os.path.join(self.root_dir, self.mask_folder, os.path.basename(self.data_frame.iloc[idx]['path']))
+        img_name = os.path.join(self.root_dir, self.rgb_folder, \
+                                os.path.basename(self.data_frame.iloc[idx]['path']))
+        mask_name = os.path.join(self.root_dir, self.mask_folder, \
+                                 os.path.basename(self.data_frame.iloc[idx]['path']))  if self.mask_folder else None
 
         # Open images
-        image = Image.open(img_name).convert('RGB')
-        mask = Image.open(mask_name).convert('L')
+        image = Image.open(img_name).convert("RGB")
+        mask = Image.open(mask_name).convert("L") if mask_name else None
 
         # Apply transforms
-        image = self.transform(image)
-        mask = self.mask_transform(mask)
+        if self.transform:
+            image = self.transform(image)
+        if mask is not None and self.mask_transform:
+            mask = self.mask_transform(mask)
         # For binary segmentation, threshold the mask
         mask = (mask > 0.5).float()
 
