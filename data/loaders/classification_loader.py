@@ -51,19 +51,6 @@ class ClassificationDataset(Dataset):
 
         return image, mask, label
 
-class CombinedModel(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.rgb_branch = rgb_model.features
-        self.mask_branch = mask_model.features
-        self.pool = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Sequential(
-            nn.Linear(rgb_features + mask_features, 256),
-            nn.Hardswish(inplace=True),
-            nn.Dropout(p=0.2, inplace=True),
-            nn.Linear(256, num_classes)
-        )
-
 def get_classification_dataloader(csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", batch_size=32, shuffle=True, num_workers=4, transform=None):
     dataset = ClassificationDataset(csv_file, root_dir, rgb_folder, mask_folder, transform)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

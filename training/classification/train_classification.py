@@ -3,15 +3,17 @@ import yaml
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from architectures.dual_input_classifier import get_dual_input_model
-from data.loaders_classification import get_classification_dataloader
+from architectures.classification.dual_input_classifier import get_dual_input_model
+from data.loaders.classification_loader import get_classification_dataloader
 from utils.logger import get_logger, log_config, log_model_info
 from utils.config import load_config
 import torchvision.transforms as transforms
 
 def main():
     # Load configuration for classification (assumed to be in config_classification.yaml)
-    config = load_config("configs/config_classification.yaml")
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    config = load_config(os.path.join(project_root, "configs/config_classification.yaml"))
+
     device = torch.device(config.get("device", "cpu"))
 
     # Get model config details
@@ -51,8 +53,8 @@ def main():
     )
 
     # Initialize classification model
-    if use_mask:  # Add a config option for this
-        model = get_dual_input_model(num_classes=num_classes, pretrained=True) 
+    model = get_dual_input_model(backbone_name=backbone_name, num_classes=num_classes, pretrained=True)
+
     model = model.to(device)
 
     # Loss and optimizer
@@ -112,7 +114,7 @@ def main():
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}")
 
     # Save classifier checkpoint
-    model_dir = os.path.join("models", "classification", encoder_name)
+    model_dir = os.path.join(project_root, "models", "classification", encoder_name)
     os.makedirs(model_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(model_dir, f"{encoder_name}.pth"))
     writer.close()

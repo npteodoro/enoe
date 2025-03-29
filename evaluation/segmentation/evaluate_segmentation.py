@@ -3,15 +3,16 @@ import os
 import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from architectures.unet_mobilenet_v3 import get_unet_mobilenet_v3
-from data.loaders_segmentation import RiverSegmentationDataset
+from architectures.segmentation.unet_mobilenet_v3 import get_unet_mobilenet_v3
+from data.loaders.segmentation_loader import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
 from utils.logger import get_logger, log_config, log_model_info
 from utils.config import load_config, get_model_config
 
 def main():
     # Load configuration
-    config = load_config("configs/config_segmentation.yaml")
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    config = load_config(os.path.join(project_root, "configs/config_segmentation.yaml"))
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
     device = torch.device(config.get("device", "cpu"))
 

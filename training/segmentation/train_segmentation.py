@@ -2,8 +2,8 @@
 import os
 import torch
 from torch.utils.data import DataLoader
-from architectures.unet_mobilenet_v3 import get_unet_mobilenet_v3
-from data.loaders_segmentation import RiverSegmentationDataset
+from architectures.segmentation.unet_mobilenet_v3 import get_unet_mobilenet_v3
+from data.loaders.segmentation_loader import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
 from utils.logger import get_logger, log_config, log_model_info
 from utils.config import load_config, get_model_config
@@ -11,7 +11,9 @@ import torchvision.transforms as transforms
 
 def main():
     # Load configuration using our config helper
-    config = load_config("configs/config_segmentation.yaml")
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    config = load_config(os.path.join(project_root, "configs/config_segmentation.yaml"))
+
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
 
     device = torch.device(config.get("device", "cpu"))
@@ -96,7 +98,7 @@ def main():
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, IoU: {iou:.4f}, Dice Loss: {dice:.4f}")
 
     # Save model checkpoint in a subfolder for the current encoder
-    model_dir = os.path.join("models", "segmentation", encoder_name)
+    model_dir = os.path.join(project_root, "models", "segmentation", encoder_name)
     os.makedirs(model_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(model_dir, f"{encoder_name}.pth"))
     writer.close()
