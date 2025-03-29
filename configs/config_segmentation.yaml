@@ -16,8 +16,8 @@ model:
   in_channels: 3
   classes: 1
   encoder_weights: "imagenet"
-  encoder_name: "timm-mobilenetv3_small_100"
+  encoder_name: "timm-mobilenetv3_large_100"
 
 device: "cuda"
-log_dir: "logs/training"
+log_dir: "logs/segmentation"
 

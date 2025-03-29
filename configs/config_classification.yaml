@@ -1,0 +1,22 @@
+dataset:
+  csv_file: "dataset/river.csv"
+  root_dir: "dataset"
+  rgb_folder: "rgb"
+  mask_folder: "mask"
+  image_size: [224, 224]
+
+training:
+  batch_size: 32
+  num_epochs: 20
+  learning_rate: 0.0001
+  num_workers: 4
+
+model:
+  encoder_name: "dual_input_classifier"
+  backbone_name: "shufflenet"  # or "mobilenet"
+  num_classes: 4
+  use_mask: true
+
+device: "cuda"
+log_dir: "logs/classification"
+
