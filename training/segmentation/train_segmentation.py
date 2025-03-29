@@ -2,7 +2,7 @@
 import os
 import torch
 from torch.utils.data import DataLoader
-from architectures.segmentation.unet_mobilenet_v3 import get_unet_mobilenet_v3
+from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
 from data.loaders.segmentation_loader import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
 from utils.logger import get_logger, log_config, log_model_info

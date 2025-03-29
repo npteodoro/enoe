@@ -3,7 +3,7 @@ import yaml
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from architectures.classification.dual_input_classifier import get_dual_input_model
+from architectures.classification.classifier_dual_input import get_dual_input_model
 from data.loaders.classification_loader import get_classification_dataloader
 from utils.logger import get_logger, log_config, log_model_info
 from utils.config import load_config
