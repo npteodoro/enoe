@@ -20,4 +20,3 @@ model:
 
 device: "cuda"
 log_dir: "logs/segmentation"
-

@@ -11,14 +11,14 @@ import torchvision.transforms as transforms
 
 def main():
     config = load_config("configs/config_forecasting.yaml")
-    device = torch.device(config.get("device", "cpu"))
-    
+    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
+
     # Setup TensorBoard logger
     log_dir = config["training"]["log_dir"]
     os.makedirs(log_dir, exist_ok=True)
     writer = get_logger(log_dir)
     log_config(writer, config)
-    
+
     # Create forecasting dataloader
     dataset_config = config["dataset"]
     dataloader = get_forecasting_dataloader(
@@ -28,7 +28,7 @@ def main():
         time_window=dataset_config["time_window"],
         num_workers=config["training"]["num_workers"]
     )
-    
+
     # Initialize forecasting model
     model_config = config["model"]
     model = ForecastingCNN_GRU(
@@ -36,14 +36,14 @@ def main():
         gru_hidden_size=model_config["gru_hidden_size"],
         gru_num_layers=model_config["gru_num_layers"],
     ).to(device)
-    
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config["training"]["learning_rate"])
-    
+
     num_epochs = config["training"]["num_epochs"]
     total_samples = len(dataloader.dataset)
     global_step = 0
-    
+
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -54,15 +54,15 @@ def main():
             loss = criterion(outputs, target)
             loss.backward()
             optimizer.step()
-            
+
             running_loss += loss.item() * imgs.size(0)
             writer.add_scalar("Train/BatchLoss", loss.item(), global_step)
             global_step += 1
-        
+
         epoch_loss = running_loss / total_samples
         writer.add_scalar("Train/EpochLoss", epoch_loss, epoch)
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}")
-    
+
     # Save the forecasting model checkpoint
     model_dir = "models/forecasting"
     os.makedirs(model_dir, exist_ok=True)

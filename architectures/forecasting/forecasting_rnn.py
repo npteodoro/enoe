@@ -4,21 +4,21 @@ import torch.nn as nn
 import torchvision.models as models
 
 class ForecastingCNN_GRU(nn.Module):
-    def __init__(self, time_window=7, num_classes=4, cnn_output_size=256, 
+    def __init__(self, time_window=7, num_classes=4, cnn_output_size=256,
                  gru_hidden_size=128, gru_num_layers=2):  # Added gru_num_layers parameter
         super().__init__()
-        
+
         # CNN feature extractor (MobileNetV3 Small)
         mobilenet = models.mobilenet_v3_small(pretrained=True)
         # Remove the classifier
         self.feature_extractor = nn.Sequential(*list(mobilenet.children())[:-1])
-        
+
         # Add flatten layer
         self.flatten = nn.Flatten()
-        
+
         # Get the correct number of output features
         self.fc = nn.Linear(mobilenet.classifier[0].in_features, cnn_output_size)
-        
+
         # RNN for sequence processing
         self.gru = nn.GRU(
             input_size=cnn_output_size,
@@ -27,10 +27,10 @@ class ForecastingCNN_GRU(nn.Module):
             batch_first=True,
             dropout=0.2 if gru_num_layers > 1 else 0  # Only use dropout if multiple layers
         )
-        
+
         # Final classifier
         self.classifier = nn.Linear(gru_hidden_size, num_classes)
-        
+
     def forward(self, x):
         # x shape: [B, T, C, H, W]
         batch_size, seq_len, C, H, W = x.size()

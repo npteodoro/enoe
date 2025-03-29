@@ -15,4 +15,3 @@ def get_model_config(config):
     in_channels = model_config.get("in_channels", 3)
     classes = model_config.get("classes", 1)
     return encoder_name, encoder_weights, in_channels, classes
-

@@ -16,4 +16,3 @@ def log_config(writer, config):
 def log_model_info(writer, encoder_name):
     """Logs the model name or encoder information."""
     writer.add_text("Model Info", f"Using encoder: {encoder_name}")
-

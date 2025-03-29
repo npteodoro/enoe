@@ -14,7 +14,7 @@ def main():
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     config = load_config(os.path.join(project_root, "configs/config_segmentation.yaml"))
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
-    device = torch.device(config.get("device", "cpu"))
+    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
 
     # Setup logger for evaluation in a dedicated folder (e.g., logs/evaluation/<encoder_name>)
     eval_log_dir = os.path.join(config.get("log_dir", "logs"), "evaluation", "segmentation", encoder_name)
@@ -96,4 +96,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

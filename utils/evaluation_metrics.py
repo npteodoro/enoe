@@ -14,4 +14,3 @@ def dice_loss(pred, mask, threshold=0.5):
     intersection = (pred * mask).sum(dim=(1, 2, 3))
     dice = (2. * intersection + smooth) / (pred.sum(dim=(1, 2, 3)) + mask.sum(dim=(1, 2, 3)) + smooth)
     return 1 - dice.mean().item()
-

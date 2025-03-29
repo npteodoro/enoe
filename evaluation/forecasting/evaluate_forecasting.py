@@ -10,14 +10,14 @@ import torchvision.transforms as transforms
 
 def main():
     config = load_config("configs/config_forecasting.yaml")
-    device = torch.device(config.get("device", "cpu"))
-    
+    device = torch.device(config.get("device", "cpu") if torch.cuda.is_available() else "cpu")
+
     # Setup logger for evaluation
     eval_log_dir = os.path.join(config.get("log_dir", "logs"), "evaluation", "forecasting")
     os.makedirs(eval_log_dir, exist_ok=True)
     writer = get_logger(eval_log_dir)
     log_config(writer, config)
-    
+
     # Create forecasting dataset and dataloader
     dataset_config = config["dataset"]
     transform = transforms.Compose([
@@ -34,7 +34,7 @@ def main():
     )
     dataloader = DataLoader(dataset, batch_size=config["training"].get("batch_size", 16),
                               shuffle=False, num_workers=config["training"].get("num_workers", 4))
-    
+
     # Initialize forecasting model
     model_config = config["model"]
     model = ForecastingCNN_GRU(
@@ -43,7 +43,7 @@ def main():
         gru_num_layers=model_config["gru_num_layers"],
         output_size=model_config["output_size"]
     ).to(device)
-    
+
     # Construct model checkpoint path
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     model_path = os.path.join(project_root, "models", "forecasting", "forecasting_cnn_gru.pth")
@@ -52,7 +52,7 @@ def main():
         return
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
-    
+
     total_error = 0.0
     total_samples = 0
     with torch.no_grad():
