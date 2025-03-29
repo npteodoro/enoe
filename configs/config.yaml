@@ -1,0 +1,74 @@
+dataset:
+  csv_file: "dataset/river.csv"
+  root_dir: "dataset"
+  rgb_folder: "rgb"
+  mask_folder: "mask"
+  image_size: [224, 224]
+
+classification:
+  dataset:
+    csv_file: "dataset/river.csv"
+    root_dir: "dataset"
+    rgb_folder: "rgb"
+    mask_folder: "mask"
+    image_size: [224, 224]
+
+  training:
+    batch_size: 32
+    num_epochs: 20
+    learning_rate: 0.0001
+    num_workers: 4
+
+  model:
+    encoder_name: "dual_input_classifier"
+    backbone_name: "shufflenet"  # or "mobilenet"
+    num_classes: 4
+    use_mask: true
+
+  device: "cuda"
+  log_dir: "logs/classification"
+
+forecasting:
+  device: "cuda"  # or "cpu"
+
+  dataset:
+    csv_file: "dataset/river.csv"
+    rgb_folder: "dataset/rgb"
+    time_window: 7  # Use 7 consecutive images (e.g., one per day) as input sequence
+
+  training:
+    batch_size: 16
+    num_epochs: 50
+    learning_rate: 0.001
+    num_workers: 4
+    log_dir: "logs/training/forecasting"
+
+  model:
+    type: "GRU"           # Options: "GRU", "TCN", etc.
+    cnn_output_size: 128  # Dimension of image features extracted by the CNN
+    gru_hidden_size: 64
+    gru_num_layers: 2
+    output_size: 1        # Predict a single water level value
+
+segmentation:
+  dataset:
+    csv_file: "dataset/river.csv"
+    root_dir: "dataset"
+    rgb_folder: "rgb"
+    mask_folder: "mask"
+    image_size: [256, 256]
+
+  training:
+    batch_size: 8
+    num_epochs: 10
+    learning_rate: 0.0001
+    num_workers: 4
+
+  model:
+    in_channels: 3
+    classes: 1
+    encoder_weights: "imagenet"
+    encoder_name: "timm-mobilenetv3_large_100"
+
+  device: "cuda"
+  log_dir: "logs/segmentation"
