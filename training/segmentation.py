@@ -1,15 +1,13 @@
-# training/train_segmentation.py
-import os
 import torch
 from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
+
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
 from data.loaders.segmentation import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
-import torchvision.transforms as transforms
+from jobs.training import TrainingStep
 
-from jobs.base import Step
-
-class TrainingSegmentation(Step):
+class TrainingSegmentation(TrainingStep):
 
     def __init__(self, config, logger):
         """
@@ -22,7 +20,7 @@ class TrainingSegmentation(Step):
         Define the transformations for the dataset.
         """
         self.transform = transforms.Compose([
-            transforms.Resize(tuple(self.config_dataset["image_size"])),
+            transforms.Resize(tuple(self.config_dataset.get("image_size"))),
             transforms.ToTensor(),
         ])
 
@@ -31,11 +29,11 @@ class TrainingSegmentation(Step):
         Define the dataset configuration.
         """
         self.dataset = RiverSegmentationDataset(
-            csv_file=self.config_dataset["csv_file"],
-            root_dir=self.config_dataset["root_dir"],
+            csv_file=self.config_dataset.get("csv_file"),
+            root_dir=self.config_dataset.get("root_dir"),
             rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
             mask_folder=self.config_dataset.get("mask_folder", "mask"),
-            image_size=tuple(self.config_dataset["image_size"]),
+            image_size=tuple(self.config_dataset.get("image_size")),
             transform=self.transform
         )
 
@@ -68,9 +66,9 @@ class TrainingSegmentation(Step):
         """
         # Loss and optimizer
         criterion = torch.nn.BCEWithLogitsLoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config_training["learning_rate"])
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config_training.get("learning_rate"))
 
-        num_epochs = self.config_training["num_epochs"]
+        num_epochs = self.config_training.get("num_epochs")
         total_samples = len(self.dataset)
         global_step = 0
 
@@ -106,18 +104,3 @@ class TrainingSegmentation(Step):
             self.logger.add_scalar("Train/DiceLoss", dice, epoch)
             print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, "
                   f"IoU: {iou:.4f}, Dice Loss: {dice:.4f}")
-
-    def process(self):
-
-        # Create dataset and dataloader
-        self.define_transform()
-
-        self.define_dataset()
-
-        self.define_dataloader()
-
-        self.initialize_model()
-
-        self.run_model()
-
-        self.save_model()

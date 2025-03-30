@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import torch
-import os
 
 class Job(ABC):
     @abstractmethod
@@ -25,16 +24,32 @@ class Step(ABC):
         self.device = torch.device(self.config.get("device", "cuda") \
                                     if torch.cuda.is_available() else "cpu")
 
-    def save_model(self):
+    def define_transform(self):
         """
-        Save model checkpoint in a subfolder for the current encoder
+        Define the transformations for the dataset.
         """
-        model_dir = os.path.join(self.config.get_root_dir(), "models",
-                                 self.config.get_step(), self.encoder_name)
-        os.makedirs(model_dir, exist_ok=True)
-        torch.save(self.model.state_dict(), os.path.join(model_dir, f"{self.encoder_name}.pth"))
-        print("Training complete and model saved.")
+        self.transform = None
 
-    @abstractmethod
-    def process(self):
+    def define_dataset(self):
+        """
+        Define the dataset configuration.
+        """
+        self.dataset = None
+
+    def define_dataloader(self):
+        """
+        Define the dataloader configuration.
+        """
+        self.dataloader = None
+
+    def initialize_model(self):
+        """
+        Initialize the model configuration.
+        """
+        self.model = None
+
+    def run_model(self):
+        """
+        Run the model on a sample batch.
+        """
         pass
