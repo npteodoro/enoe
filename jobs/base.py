@@ -16,13 +16,13 @@ class Step(ABC):
         self.config = config
         self.logger = logger
 
-        self.config_dataset = config.get_dataset()
-        self.config_training = config.get_training()
-        self.config_model = config.get_model()
+        self.config_dataset = self.config.get_dataset()
+        self.config_training = self.config.get_training()
+        self.config_model = self.config.get_model()
 
-        self.encoder_name = config.get_encoder_name()
+        self.encoder_name = self.config.get_encoder_name()
 
-        self.device = torch.device(self.get_config().get("device", "cuda") \
+        self.device = torch.device(self.config.get_config().get("device", "cuda") \
                                     if torch.cuda.is_available() else "cpu")
 
     def define_transform(self):
