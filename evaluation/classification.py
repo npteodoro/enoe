@@ -1,7 +1,6 @@
 import torch
 import torchvision.transforms as transforms
 
-from architectures.classification.classifier_dual_input import get_dual_input_model
 from data.loaders.classification import ClassificationDataset
 from jobs.evaluation import EvaluationStep
 
@@ -37,15 +36,15 @@ class EvaluationClassification(EvaluationStep):
             mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None,
             transform=self.transform)
 
-    def initialize_model(self):
-        """
-        Load the model weights from the specified path.
-        """
-        self.model = get_dual_input_model(
-            backbone_name=self.config_model.get("backbone_name", "shufflenet"),
-            num_classes=self.config_model.get("num_classes", 4),
-            pretrained=False
-        ).to(self.device)
+    # def initialize_model(self):
+    #     """
+    #     Load the model weights from the specified path.
+    #     """
+    #     self.model = get_dual_input_model(
+    #         backbone_name=self.config_model.get("backbone_name", "shufflenet"),
+    #         num_classes=self.config_model.get("num_classes", 4),
+    #         pretrained=False
+    #     ).to(self.device)
 
     def run_model(self):
 

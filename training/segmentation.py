@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 
-from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
+# from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
 from data.loaders.segmentation import SegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
 from jobs.training import TrainingStep
@@ -39,17 +39,17 @@ class TrainingSegmentation(TrainingStep):
     def define_dataloader(self):
         super().define_dataloader(shuffle=True)
 
-    def initialize_model(self):
-        """
-        Initialize the model configuration.
-        """
-        self.model = get_unet_mobilenet_v3(
-            in_channels=self.config_model.get("in_channels", 3),
-            classes=self.config_model.get("classes", 1),
-            encoder_name=self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
-            encoder_weights=self.config_model.get("encoder_weights", "imagenet")
-        )
-        self.model = self.model.to(self.device)
+    # def initialize_model(self):
+    #     """
+    #     Initialize the model configuration.
+    #     """
+    #     self.model = get_unet_mobilenet_v3(
+    #         in_channels=self.config_model.get("in_channels", 3),
+    #         classes=self.config_model.get("classes", 1),
+    #         encoder_name=self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
+    #         encoder_weights=self.config_model.get("encoder_weights", "imagenet")
+    #     )
+    #     self.model = self.model.to(self.device)
 
     def run_model(self):
         """

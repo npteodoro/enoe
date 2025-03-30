@@ -16,7 +16,7 @@ class AttnLSTMDual(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d(1)
         )
-        
+
         # Mask Encoder
         self.mask_enc = nn.Sequential(
             nn.Conv2d(1, 32, 3, padding=1),
@@ -28,7 +28,7 @@ class AttnLSTMDual(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d(1)
         )
-        
+
         # Attention LSTM
         self.lstm = nn.LSTM(128+64+1, 256, batch_first=True)  # +time
         self.attn = nn.Sequential(
@@ -43,7 +43,7 @@ class AttnLSTMDual(nn.Module):
         rgb_feats = self.rgb_enc(x.view(-1,3,128,128)).view(batch, seq, -1)
         mask_feats = self.mask_enc(masks.view(-1,1,128,128)).view(batch, seq, -1)
         combined = torch.cat([rgb_feats, mask_feats, t.unsqueeze(-1)], -1)
-        
+
         lstm_out, _ = self.lstm(combined)
         attn_weights = F.softmax(self.attn(lstm_out), dim=1)
         context = torch.sum(attn_weights * lstm_out, dim=1)

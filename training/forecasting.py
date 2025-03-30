@@ -26,11 +26,11 @@ class TrainingForecasting(TrainingStep):
     def define_dataloader(self):
         super().define_dataloader(shuffle=True)
 
-    def initialize_model(self):
-        """
-        Initialize the model configuration.
-        """
-        self.model = AttnLSTMDual().to(self.device)
+    # def initialize_model(self):
+    #     """
+    #     Initialize the model configuration.
+    #     """
+    #     self.model = AttnLSTMDual().to(self.device)
 
     def run_model(self):
         """

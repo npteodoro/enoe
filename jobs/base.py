@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import torch
 from torch.utils.data import DataLoader
+import importlib
 
 class Job(ABC):
     @abstractmethod
@@ -21,7 +22,7 @@ class Step(ABC):
         self.config_model = config.get_model()
 
         self.encoder_name = config.get_encoder_name()
-        
+
         print(f"Encoder name: {self.encoder_name}")
 
         self.device = torch.device(self.config.get_config().get("device", "cuda") \
@@ -52,9 +53,21 @@ class Step(ABC):
 
     def initialize_model(self):
         """
-        Initialize the model configuration.
+        Dynamically initialize the model based on the class name provided in the configuration.
         """
-        self.model = None
+        architecture = f"architectures.{self.config.get_step()}.{self.config_model.get("architecture")}"
+        print(f"Model architecture: {architecture}")
+
+        # Dynamically import the model class
+        module_name, class_name = architecture.rsplit(".", 1)
+        try:
+            module = importlib.import_module(module_name)
+            model_class = getattr(module, class_name)
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f"Could not import model class '{architecture}': {e}")
+
+        # Initialize the model
+        self.model = model_class().to(self.device)
 
     def run_model(self):
         """

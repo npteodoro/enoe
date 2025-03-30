@@ -10,7 +10,7 @@ class SingleMobileNet(nn.Module):
             nn.Linear(576, 256),
             nn.Hardswish(),
             nn.Linear(256, num_classes))
-    
+
     def forward(self, x):
         features = self.model.features(x).mean([2, 3])
         return self.classifier(features)

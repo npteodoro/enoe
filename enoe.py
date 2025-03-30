@@ -28,6 +28,12 @@ def parse_arguments():
         default=None,
         help="The name of the encoder to use. Default is 'default_encoder'."
     )
+    parser.add_argument(
+        "--architecture",
+        type=str,
+        default=None,
+        help="The architecture to use. Default is configs/config.yaml."
+    )
 
     # Parse arguments
     return parser.parse_args()
@@ -41,6 +47,8 @@ def main():
     config.load(job=args.job, step=args.step)
     if args.encoder_name:
         config.set_encoder_name(args.encoder_name)
+    if args.architecture:
+        config.set_model_architecture(args.architecture)
 
     # Initialize logger
     logger = Logger(config=config)

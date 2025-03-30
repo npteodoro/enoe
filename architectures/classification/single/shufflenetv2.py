@@ -9,6 +9,6 @@ class SingleShuffleNetV2(nn.Module):
             nn.Linear(1024, 256),
             nn.ReLU(),
             nn.Linear(256, num_classes))
-    
+
     def forward(self, x):
         return self.classifier(self.model(x))

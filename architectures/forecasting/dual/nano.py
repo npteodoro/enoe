@@ -10,14 +10,14 @@ class NanoDual(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d(1)
         )
-        
+
         # Mask branch
         self.mask = nn.Sequential(
             nn.Conv2d(1, 4, 3, stride=2),
             nn.ReLU(),
             nn.AdaptiveAvgPool2d(1)
         )
-        
+
         # Temporal (1DConv)
         self.temp = nn.Sequential(
             nn.Conv1d(8+4+1, 16, 3),  # 8(rgb)+4(mask)+1(time)

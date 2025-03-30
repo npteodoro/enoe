@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 
-from architectures.classification.classifier_dual_input import get_dual_input_model
+# from architectures.classification.classifier_dual_input import get_dual_input_model
 from data.loaders.classification import ClassificationDataset
 from jobs.training import TrainingStep
 
@@ -43,15 +43,15 @@ class TrainingClassification(TrainingStep):
             transform=self.transform
         )
 
-    def initialize_model(self):
-        """
-        Initialize the model configuration.
-        """
-        self.model = get_dual_input_model(
-            backbone_name=self.config_model.get("backbone_name", "shufflenet"),
-            num_classes=self.config_model.get("num_classes", 4),  # e.g., 4 classes: low, medium, high, floo,
-            pretrained=True
-        ).to(self.device)
+    # def initialize_model(self):
+    #     """
+    #     Initialize the model configuration.
+    #     """
+    #     self.model = get_dual_input_model(
+    #         backbone_name=self.config_model.get("backbone_name", "shufflenet"),
+    #         num_classes=self.config_model.get("num_classes", 4),  # e.g., 4 classes: low, medium, high, floo,
+    #         pretrained=True
+    #     ).to(self.device)
 
     def run_model(self):
         """
