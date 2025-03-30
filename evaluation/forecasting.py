@@ -1,5 +1,4 @@
 import torch
-from torch.utils.data import DataLoader
 from data.loaders.forecasting import ForecastingDataset
 from architectures.forecasting.forecasting_rnn import ForecastingCNN_GRU
 import torchvision.transforms as transforms
@@ -34,14 +33,6 @@ class EvaluationForecasting(EvaluationStep):
             rgb_folder=self.config_dataset.get("rgb_folder"),
             time_window=self.config_dataset.get("time_window"),
             transform=self.transform
-        )
-
-    def define_dataloader(self):
-        self.dataloader = DataLoader(
-            self.dataset,
-            batch_size=self.config_training.get("batch_size", 16),
-            shuffle=False,
-            num_workers=self.config_training.get("num_workers", 4)
         )
 
     def initialize_model(self):

@@ -1,5 +1,4 @@
 import torch
-from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
@@ -38,15 +37,7 @@ class TrainingSegmentation(TrainingStep):
         )
 
     def define_dataloader(self):
-        """
-        Define the dataloader configuration.
-        """
-        self.dataloader = DataLoader(
-            self.dataset,
-            batch_size=self.config_training["batch_size"],
-            shuffle=True,
-            num_workers=self.config_training["num_workers"]
-        )
+        super().define_dataloader(shuffle=True)
 
     def initialize_model(self):
         """

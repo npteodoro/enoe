@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.optim as optim
 
-from data.loaders.forecasting import get_forecasting_dataloader
+from data.loaders.forecasting import ForecastingDataset
 from architectures.forecasting.forecasting_rnn import ForecastingCNN_GRU
 from jobs.training import TrainingStep
 
@@ -15,18 +15,17 @@ class TrainingForecasting(TrainingStep):
         self.config = config
         self.logger = logger
 
-    def define_dataloader(self):
-        """
-        Define the dataloader configuration.
-        """
-        self.dataloader = get_forecasting_dataloader(
+    def define_dataset(self):
+        self.dataset = ForecastingDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
             rgb_folder=self.config_dataset.get("rgb_folder"),
-            batch_size=self.data_training.get("batch_size"),
             time_window=self.config_dataset.get("time_window"),
-            num_workers=self.data_training.get("num_workers")
+            transform=self.transform
         )
+
+    def define_dataloader(self):
+        super().define_dataloader(shuffle=True)
 
     def initialize_model(self):
         """

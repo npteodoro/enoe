@@ -3,7 +3,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 
 from architectures.classification.classifier_dual_input import get_dual_input_model
-from data.loaders.classification import get_classification_dataloader
+from data.loaders.classification import ClassificationDataset
 from jobs.training import TrainingStep
 
 class TrainingClassification(TrainingStep):
@@ -31,18 +31,15 @@ class TrainingClassification(TrainingStep):
                                 std=[0.229, 0.224, 0.225])
         ])
 
-    def define_dataloader(self):
+    def define_dataset(self):
         """
-        Define the dataloader configuration.
+        Define the dataset configuration.
         """
-        self.dataloader = get_classification_dataloader(
+        self.dataset = ClassificationDataset(
             csv_file=self.config_dataset.get("csv_file"),
-            rgb_folder=self.config_dataset.get("rgb_folder"),
-            mask_folder=self.config_dataset.get("mask_folder"),
             root_dir=self.config_dataset.get("root_dir"),
-            batch_size=self.config_training.get("batch_size"),
-            shuffle=True,
-            num_workers=self.config_training.get("num_workers"),
+            rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
+            mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None,
             transform=self.transform
         )
 

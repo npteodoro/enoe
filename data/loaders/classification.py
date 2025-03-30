@@ -54,8 +54,3 @@ class ClassificationDataset(Dataset):
             mask = self.mask_transform(mask)
 
         return image, mask, label
-
-def get_classification_dataloader(csv_file, root_dir, rgb_folder="rgb", mask_folder="mask", \
-                                  batch_size=32, shuffle=True, num_workers=4, transform=None):
-    dataset = ClassificationDataset(csv_file, root_dir, rgb_folder, mask_folder, transform)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

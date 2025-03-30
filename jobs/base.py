@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import torch
+from torch.utils.data import DataLoader
 
 class Job(ABC):
     @abstractmethod
@@ -36,11 +37,16 @@ class Step(ABC):
         """
         self.dataset = None
 
-    def define_dataloader(self):
+    def define_dataloader(self, batch_size=None, num_workers=None, shuffle=False):
         """
         Define the dataloader configuration.
         """
-        self.dataloader = None
+        self.dataloader = DataLoader(
+            self.dataset,
+            batch_size=batch_size or self.config_training.get("batch_size", 4),
+            num_workers=num_workers or self.config_training.get("num_workers", 2),
+            shuffle=shuffle
+        )
 
     def initialize_model(self):
         """

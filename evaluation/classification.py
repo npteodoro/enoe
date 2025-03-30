@@ -2,7 +2,7 @@ import torch
 import torchvision.transforms as transforms
 
 from architectures.classification.classifier_dual_input import get_dual_input_model
-from data.loaders.classification import get_classification_dataloader
+from data.loaders.classification import ClassificationDataset
 from jobs.evaluation import EvaluationStep
 
 class EvaluationClassification(EvaluationStep):
@@ -26,20 +26,16 @@ class EvaluationClassification(EvaluationStep):
                                 std=[0.229, 0.224, 0.225])
         ])
 
-    def define_dataloader(self):
+    def define_dataset(self):
         """
-        Define the dataloader configuration.
+        Define the dataset configuration.
         """
-        self.dataloader = get_classification_dataloader(
+        self.dataset = ClassificationDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
             rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
             mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None,
-            batch_size=self.config_training.get("batch_size", 4),
-            shuffle=False,
-            num_workers=self.config_training.get("num_workers", 2),
-            transform=self.transform
-        )
+            transform=self.transform)
 
     def initialize_model(self):
         """

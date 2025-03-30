@@ -1,5 +1,4 @@
 import torch
-from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
@@ -38,18 +37,6 @@ class EvaluationSegmentation(EvaluationStep):
             mask_folder=self.config_dataset.get("mask_folder", "mask"),
             image_size=tuple(self.config_dataset.get("image_size")),
             transform=self.transform
-        )
-
-    def define_dataloader(self):
-        """
-        Define the dataloader configuration.
-        """
-
-        self.dataloader = DataLoader(
-            self.dataset,
-            batch_size=self.config_training.get("batch_size", 4),
-            shuffle=False,
-            num_workers=self.config_training.get("num_workers", 2)
         )
 
     def initialize_model(self):
