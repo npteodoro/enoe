@@ -58,10 +58,6 @@ class ForecastingDataset(Dataset):
         target = torch.tensor(target_level, dtype=torch.long)
         return sequence, target
 
-def get_forecasting_dataloader(csv_file, root_dir, rgb_folder, batch_size=16, time_window=7, num_workers=4):
-    dataset = ForecastingDataset(csv_file, root_dir, rgb_folder, time_window=time_window)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-
 class ForecastingModel(nn.Module):
     def __init__(self, time_window=7, num_classes=4, cnn_output_size=256, hidden_size=128):
         super().__init__()

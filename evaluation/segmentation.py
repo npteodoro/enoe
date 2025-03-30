@@ -1,102 +1,82 @@
-# evaluation/evaluate_segmentation.py
-import os
 import torch
-from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
+
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
 from data.loaders.segmentation import RiverSegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
-from utils.logger import init_logger
-from utils.config import load_config, get_model_config
 
-from jobs.base import Step
+from jobs.evaluation import EvaluationStep
 
-class EvaluationSegmentation(Step):
-    def process(self, config, logger):
-        print("Segmenting data with the trained model...")
+class EvaluationSegmentation(EvaluationStep):
 
-def main(config=None, writer=None, device=None):
+    def __init__(self, config, logger):
+        """
+        Initialize step with configuration and logger.
+        """
+        super().__init__(config, logger)
+        self.config = config
+        self.logger = logger
 
-    encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
+    def define_transform(self):
+        """
+        Define the transformations for the dataset.
+        """
+        self.transform = transforms.Compose([
+            transforms.Resize(tuple(self.config_dataset.get("image_size"))),
+            transforms.ToTensor(),
+        ])
 
-    # Create dataset and dataloader for evaluation
-    dataset_config = config["dataset"]
-    transform = transforms.Compose([
-        transforms.Resize(tuple(dataset_config["image_size"])),
-        transforms.ToTensor(),
-    ])
-    dataset = RiverSegmentationDataset(
-        csv_file=dataset_config["csv_file"],
-        root_dir=dataset_config["root_dir"],
-        rgb_folder=dataset_config.get("rgb_folder", "rgb"),
-        mask_folder=dataset_config.get("mask_folder", "mask"),
-        image_size=tuple(dataset_config["image_size"]),
-        transform=transform
-    )
-    dataloader = DataLoader(
-        dataset,
-        batch_size=config["training"].get("batch_size", 4),
-        shuffle=False,
-        num_workers=config["training"].get("num_workers", 2)
-    )
+    def define_dataset(self):
+        """
+        Define the dataset configuration.
+        """
+        self.dataset = RiverSegmentationDataset(
+            csv_file=self.config_dataset.get("csv_file"),
+            root_dir=self.config_dataset.get("root_dir"),
+            rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
+            mask_folder=self.config_dataset.get("mask_folder", "mask"),
+            image_size=tuple(self.config_dataset.get("image_size")),
+            transform=self.transform
+        )
 
-    # Initialize the model with the same parameters as in training
-    model = get_unet_mobilenet_v3(
-        in_channels=in_channels,
-        classes=classes,
-        encoder_name=encoder_name,
-        encoder_weights=encoder_weights
-    )
-    model = model.to(device)
+    def initialize_model(self):
+        """
+        Initialize the model configuration.
+        """
+        self.model = get_unet_mobilenet_v3(
+            in_channels=self.config_model.get("in_channels", 3),
+            classes=self.config_model.get("classes", 1),
+            encoder_name=self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
+            encoder_weights=self.config_model.get("encoder_weights", "imagenet")
+        ).to(self.device)
 
-    # Construct the model path (saved under models/<encoder_name>/...)
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    model_path = os.path.join(project_root, "models", "segmentation", encoder_name, f"{encoder_name}.pth")
+    def run_model(self):
+        """
+        Run the model on a sample batch.
+        """
 
-    if not os.path.exists(model_path):
-        print(f"Error: Model file not found at {model_path}")
-        print(f"Please train the model with encoder '{encoder_name}' first.")
-        return
+        total_iou = 0.0
+        total_dice = 0.0
+        num_batches = 0
 
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()
+        with torch.no_grad():
+            for batch_idx, (images, masks) in enumerate(self.dataloader):
+                images = images.to(self.device)
+                masks = masks.to(self.device)
+                outputs = torch.sigmoid(self.model(images))
+                batch_iou = iou_score(outputs, masks)
+                batch_dice = dice_loss(outputs, masks)
 
-    total_iou = 0.0
-    total_dice = 0.0
-    num_batches = 0
+                total_iou += batch_iou
+                total_dice += batch_dice
+                num_batches += 1
 
-    with torch.no_grad():
-        for batch_idx, (images, masks) in enumerate(dataloader):
-            images = images.to(device)
-            masks = masks.to(device)
-            outputs = torch.sigmoid(model(images))
-            batch_iou = iou_score(outputs, masks)
-            batch_dice = dice_loss(outputs, masks)
+                # Log batch-level metrics
+                self.logger.add_scalar("Eval/Batch_IoU", batch_iou, batch_idx)
+                self.logger.add_scalar("Eval/Batch_DiceLoss", batch_dice, batch_idx)
 
-            total_iou += batch_iou
-            total_dice += batch_dice
-            num_batches += 1
-
-            # Log batch-level metrics
-            writer.add_scalar("Eval/Batch_IoU", batch_iou, batch_idx)
-            writer.add_scalar("Eval/Batch_DiceLoss", batch_dice, batch_idx)
-
-    avg_iou = total_iou / num_batches
-    avg_dice = total_dice / num_batches
-    print(f"Average IoU: {avg_iou:.4f}, Average Dice Loss: {avg_dice:.4f}")
-    writer.add_scalar("Eval/Avg_IoU", avg_iou)
-    writer.add_scalar("Eval/Avg_DiceLoss", avg_dice)
-
-if __name__ == "__main__":
-    # Load configuration using our config helper
-    config = load_config(job="evaluantion", step="segmentation")
-
-    # Setup TensorBoard logger for evaluation in a dedicated subfolder
-    writer = init_logger(config=config)
-
-    # Default is cuda if available, else cpu
-    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
-
-    main(config=config, writer=writer, device=device)
-
-    writer.close()
+        avg_iou = total_iou / num_batches
+        avg_dice = total_dice / num_batches
+        print(f"Average IoU: {avg_iou:.4f}, Average Dice Loss: {avg_dice:.4f}")
+        self.logger.add_scalar("Eval/Avg_IoU", avg_iou)
+        self.logger.add_scalar("Eval/Avg_DiceLoss", avg_dice)

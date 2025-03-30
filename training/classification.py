@@ -1,128 +1,96 @@
-import os
-import yaml
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from architectures.classification.classifier_dual_input import get_dual_input_model
-from data.loaders.classification import get_classification_dataloader
-from utils.logger import init_logger
-from utils.config import load_config
 import torchvision.transforms as transforms
 
-from jobs.base import Step
+from architectures.classification.classifier_dual_input import get_dual_input_model
+from data.loaders.classification import ClassificationDataset
+from jobs.training import TrainingStep
 
-class TrainingClassification(Step):
-    def process(self, config, logger):
-        print("Model training for classification...")
+class TrainingClassification(TrainingStep):
 
-def main(config=None, writer=None, device=None):
+    def __init__(self, config, logger):
+        """
+        Initialize step with configuration and logger.
+        """
+        super().__init__(config, logger)
+        self.config = config
+        self.logger = logger
 
-    # Get model config details
-    model_config = config["model"]
-    encoder_name = model_config.get("encoder_name", "mobilenetv3_small_classifier")
-    num_classes = model_config.get("num_classes", 4)  # e.g., 4 classes: low, medium, high, flood
-    use_mask = model_config.get("use_mask", False)  # Add a config option for this
+        self.use_mask = self.config_model.get("use_mask", False)  # Add a config option for this
 
-    # Get backbone name from config
-    backbone_name = model_config.get("backbone_name", "shufflenet")
+        self.encoder_name = self.config_model.get("encoder_name", "mobilenetv3_small_classifier")
 
-    # Create classification dataloader
-    dataset_config = config["dataset"]
-    transform = transforms.Compose([
-        transforms.Resize(tuple(dataset_config["image_size"])),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
+    def define_transform(self):
+        """
+        Define the transformations for the dataset.
+        """
+        self.transform = transforms.Compose([
+            transforms.Resize(tuple(self.config_dataset.get("image_size"))),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225])
+        ])
 
-    dataloader = get_classification_dataloader(
-        csv_file=dataset_config["csv_file"],
-        rgb_folder=dataset_config["rgb_folder"],
-        mask_folder=dataset_config["mask_folder"],
-        root_dir=dataset_config["root_dir"],
-        batch_size=config["training"]["batch_size"],
-        shuffle=True,
-        num_workers=config["training"]["num_workers"],
-        transform=transform
-    )
+    def define_dataset(self):
+        """
+        Define the dataset configuration.
+        """
+        self.dataset = ClassificationDataset(
+            csv_file=self.config_dataset.get("csv_file"),
+            root_dir=self.config_dataset.get("root_dir"),
+            rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
+            mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None,
+            transform=self.transform
+        )
 
-    # Initialize classification model
-    model = get_dual_input_model(backbone_name=backbone_name, num_classes=num_classes, pretrained=True)
+    def initialize_model(self):
+        """
+        Initialize the model configuration.
+        """
+        self.model = get_dual_input_model(
+            backbone_name=self.config_model.get("backbone_name", "shufflenet"),
+            num_classes=self.config_model.get("num_classes", 4),  # e.g., 4 classes: low, medium, high, floo,
+            pretrained=True
+        ).to(self.device)
 
-    model = model.to(device)
+    def run_model(self):
+        """
+        Run the model training.
+        """
+        num_epochs = self.config_training.get("num_epochs")
+        total_samples = len(self.dataloader.dataset)
+        global_step = 0
 
-    # Loss and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["learning_rate"])
+        for epoch in range(num_epochs):
+            self.model.train()
+            running_loss = 0.0
+            correct = 0
 
-    num_epochs = config["training"]["num_epochs"]
-    total_samples = len(dataloader.dataset)
-    global_step = 0
+            # Current code has incorrect unpacking - should handle masks too
+            for (images, masks, labels) in self.dataloader:
+                images = images.to(self.device)
+                if self.use_mask:
+                    masks = masks.to(self.device)
+                labels = labels.to(self.device)
 
-    for epoch in range(num_epochs):
-        model.train()
-        running_loss = 0.0
-        correct = 0
-
-        # Current code has incorrect unpacking - should handle masks too
-        if use_mask:
-            for (images, masks, labels) in dataloader:
-                images = images.to(device)
-                masks = masks.to(device)
-                labels = labels.to(device)
-
-                optimizer.zero_grad()
-                outputs = model(images, masks)  # Pass both images and masks
-                loss = criterion(outputs, labels)
+                self.optimizer.zero_grad()
+                if self.use_mask:
+                    outputs = self.model(images, masks)  # Pass both images and masks
+                else:
+                    outputs = self.model(images)
+                loss = self.criterion(outputs, labels)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
                 running_loss += loss.item() * images.size(0)
                 _, preds = torch.max(outputs, 1)
                 correct += torch.sum(preds == labels).item()
 
-                writer.add_scalar("Train/BatchLoss", loss.item(), global_step)
-                global_step += 1
-        else:
-            for (images, _, labels) in dataloader:  # Ignore masks
-                images = images.to(device)
-                labels = labels.to(device)
-
-                optimizer.zero_grad()
-                outputs = model(images)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
-
-                running_loss += loss.item() * images.size(0)
-                _, preds = torch.max(outputs, 1)
-                correct += torch.sum(preds == labels).item()
-
-                writer.add_scalar("Train/BatchLoss", loss.item(), global_step)
+                self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
                 global_step += 1
 
-        epoch_loss = running_loss / total_samples
-        epoch_acc = correct / total_samples
-        writer.add_scalar("Train/EpochLoss", epoch_loss, epoch)
-        writer.add_scalar("Train/EpochAccuracy", epoch_acc, epoch)
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}")
-
-    # Save classifier checkpoint
-    model_dir = os.path.join(config["root_dir"], "models", "classification", encoder_name)
-    os.makedirs(model_dir, exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(model_dir, f"{encoder_name}.pth"))
-    print("Classification training complete and model saved.")
-
-if __name__ == "__main__":
-    # Load configuration using our config helper
-    config = load_config(job="evaluantion", step="classification")
-
-    # Setup TensorBoard logger for evaluation in a dedicated subfolder
-    writer = init_logger(config=config)
-
-    # Default is cuda if available, else cpu
-    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
-
-    main(config=config, writer=writer, device=device)
-
-    writer.close()
+            epoch_loss = running_loss / total_samples
+            epoch_acc = correct / total_samples
+            self.logger.add_scalar("Train/EpochLoss", epoch_loss, epoch)
+            self.logger.add_scalar("Train/EpochAccuracy", epoch_acc, epoch)
+            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}")

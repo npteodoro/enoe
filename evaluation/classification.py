@@ -1,97 +1,75 @@
-# evaluation/evaluate_classification.py
-import os
 import torch
-from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
+
 from architectures.classification.classifier_dual_input import get_dual_input_model
-from data.loaders.classification import get_classification_dataloader
-from utils.logger import init_logger
-from utils.config import load_config
+from data.loaders.classification import ClassificationDataset
+from jobs.evaluation import EvaluationStep
 
-from jobs.base import Step
+class EvaluationClassification(EvaluationStep):
 
-class EvaluationClassification(Step):
-    def process(self, config, logger):
-        print("Classifying data with the trained model...")
+    def __init__(self, config, logger):
+        """
+        Initialize step with configuration and logger.
+        """
+        super().__init__(config, logger)
+        self.config = config
+        self.logger = logger
 
-def main(config=None, writer=None, device=None):
+        self.use_mask = self.config_model.get("use_mask", False)  # Add this line
+        self.encoder_name = self.config_model.get("encoder_name", "mobilenetv3_small_classifier")
 
-    # Extract model configuration details
-    model_config = config["model"]
-    encoder_name = model_config.get("encoder_name", "mobilenetv3_small_classifier")
-    num_classes = model_config.get("num_classes", 4)
-    use_mask = model_config.get("use_mask", False)  # Add this line
+    def define_transform(self):
+        self.transform = transforms.Compose([
+            transforms.Resize(tuple(self.config_dataset.get("image_size"))),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225])
+        ])
 
-    # Create dataset and dataloader
-    dataset_config = config["dataset"]
-    transform = transforms.Compose([
-        transforms.Resize(tuple(dataset_config["image_size"])),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    dataloader = get_classification_dataloader(
-        csv_file=dataset_config["csv_file"],
-        root_dir=dataset_config["root_dir"],
-        rgb_folder=dataset_config.get("rgb_folder", "rgb"),
-        mask_folder=dataset_config.get("mask_folder", "mask") if use_mask else None,
-        batch_size=config["training"].get("batch_size", 4),
-        shuffle=False,
-        num_workers=config["training"].get("num_workers", 2),
-        transform=transform
-    )
+    def define_dataset(self):
+        """
+        Define the dataset configuration.
+        """
+        self.dataset = ClassificationDataset(
+            csv_file=self.config_dataset.get("csv_file"),
+            root_dir=self.config_dataset.get("root_dir"),
+            rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
+            mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None,
+            transform=self.transform)
 
-    # Initialize classification model
-    backbone_name = model_config.get("backbone_name", "shufflenet")
-    model = get_dual_input_model(backbone_name=backbone_name, num_classes=num_classes, pretrained=False)
+    def initialize_model(self):
+        """
+        Load the model weights from the specified path.
+        """
+        self.model = get_dual_input_model(
+            backbone_name=self.config_model.get("backbone_name", "shufflenet"),
+            num_classes=self.config_model.get("num_classes", 4),
+            pretrained=False
+        ).to(self.device)
 
-    # Construct model checkpoint path (assumes the model was saved under models/classification/<encoder_name>/)
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    model_path = os.path.join(project_root, "models", "classification", encoder_name, f"{encoder_name}.pth")
+    def run_model(self):
 
-    if not os.path.exists(model_path):
-        print(f"Error: Model file not found at {model_path}")
-        print(f"Please train the classifier with encoder '{encoder_name}' first.")
-        return
+        total_correct = 0
+        total_samples = 0
 
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()
+        with torch.no_grad():
+            for batch in self.dataloader:
+                if self.use_mask:
+                    images, masks, labels = batch
+                    images = images.to(self.device)
+                    masks = masks.to(self.device)
+                    labels = labels.to(self.device)
+                    outputs = self.model(images, masks)
+                else:
+                    images, _, labels = batch  # Ignore mask
+                    images = images.to(self.device)
+                    labels = labels.to(self.device)
+                    outputs = self.model(images)
 
-    total_correct = 0
-    total_samples = 0
+                _, preds = torch.max(outputs, 1)
+                total_correct += (preds == labels).sum().item()
+                total_samples += labels.size(0)
 
-    with torch.no_grad():
-        for batch in dataloader:
-            if use_mask:
-                images, masks, labels = batch
-                images = images.to(device)
-                masks = masks.to(device)
-                labels = labels.to(device)
-                outputs = model(images, masks)
-            else:
-                images, _, labels = batch  # Ignore mask
-                images = images.to(device)
-                labels = labels.to(device)
-                outputs = model(images)
-
-            _, preds = torch.max(outputs, 1)
-            total_correct += (preds == labels).sum().item()
-            total_samples += labels.size(0)
-
-    accuracy = total_correct / total_samples
-    print(f"Classification Accuracy: {accuracy:.4f}")
-    writer.add_scalar("Eval/Accuracy", accuracy)
-
-if __name__ == "__main__":
-    # Load configuration using our config helper
-    config = load_config(job="evaluantion", step="classification")
-
-    # Setup TensorBoard logger for evaluation in a dedicated subfolder
-    writer = init_logger(config=config)
-
-    # Default is cuda if available, else cpu
-    device = torch.device(config.get("device", "cuda") if torch.cuda.is_available() else "cpu")
-
-    main(config=config, writer=writer, device=device)
-
-    writer.close()
+        accuracy = total_correct / total_samples
+        print(f"Classification Accuracy: {accuracy:.4f}")
+        self.logger.add_scalar("Eval/Accuracy", accuracy)
