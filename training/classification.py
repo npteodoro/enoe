@@ -39,8 +39,7 @@ class TrainingClassification(TrainingStep):
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
             rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
-            mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None,
-            transform=self.transform
+            mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None
         )
 
     # def initialize_model(self):
