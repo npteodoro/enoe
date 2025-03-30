@@ -11,8 +11,8 @@ class JobExecutor:
         step = StepFactory.create_step(job_type, step_type)
 
         if job and step:
-            self.logger.writer.add_text("Job Execution", f"Executing {job_type} -> {step_type}")
+            self.logger.add_text("Job Execution", f"Executing {job_type} -> {step_type}")
             job.execute(step, self.config, self.logger)
         else:
-            self.logger.writer.add_text("Error", "Error: Job or Step invalid")
+            self.logger.add_text("Error", "Error: Job or Step invalid")
             print("Error: Job or Step invalid")

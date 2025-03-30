@@ -44,7 +44,7 @@ enoe/
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/ynpteodoro/enoe.git
+git clone https://github.com/ynpteodoro/enoe
 cd enoe
 pip install -r requirements.txt
 ```
