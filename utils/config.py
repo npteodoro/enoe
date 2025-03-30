@@ -38,14 +38,17 @@ class ConfigLoader:
             return func(self, *args, **kwargs)
         return wrapper
 
+    @require_config
     def get_root_dir(self):
         """Return the root directory."""
         return self.root_dir
 
+    @require_config
     def get_job(self):
         """Return the job name."""
         return self.job
 
+    @require_config
     def get_step(self):
         """Return the step name."""
         return self.step

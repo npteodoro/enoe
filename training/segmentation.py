@@ -62,15 +62,6 @@ class TrainingSegmentation(Step):
         )
         self.model = self.model.to(self.device)
 
-    def save_model(self):
-        """
-        Save model checkpoint in a subfolder for the current encoder
-        """
-        model_dir = os.path.join(self.config.get_root_dir(), "models", "segmentation", self.encoder_name)
-        os.makedirs(model_dir, exist_ok=True)
-        torch.save(self.model.state_dict(), os.path.join(model_dir, f"{self.encoder_name}.pth"))
-        print("Training complete and model saved.")
-
     def run_model(self):
         """
         Run the model on a sample batch.
@@ -113,9 +104,8 @@ class TrainingSegmentation(Step):
             self.logger.add_scalar("Train/EpochLoss", epoch_loss, epoch)
             self.logger.add_scalar("Train/IoU", iou, epoch)
             self.logger.add_scalar("Train/DiceLoss", dice, epoch)
-            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, IoU: {iou:.4f}, Dice Loss: {dice:.4f}")
-
-            self.save_model()
+            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, "
+                  f"IoU: {iou:.4f}, Dice Loss: {dice:.4f}")
 
     def process(self):
 
@@ -129,3 +119,5 @@ class TrainingSegmentation(Step):
         self.initialize_model()
 
         self.run_model()
+
+        self.save_model()
