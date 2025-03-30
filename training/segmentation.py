@@ -2,7 +2,7 @@ import torch
 import torchvision.transforms as transforms
 
 from architectures.segmentation.segmentation_unet import get_unet_mobilenet_v3
-from data.loaders.segmentation import RiverSegmentationDataset
+from data.loaders.segmentation import SegmentationDataset
 from utils.evaluation_metrics import iou_score, dice_loss
 from jobs.training import TrainingStep
 
@@ -27,7 +27,7 @@ class TrainingSegmentation(TrainingStep):
         """
         Define the dataset configuration.
         """
-        self.dataset = RiverSegmentationDataset(
+        self.dataset = SegmentationDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
             rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),

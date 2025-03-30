@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
-class RiverSegmentationDataset(Dataset):
+class SegmentationDataset(Dataset):
     def __init__(self, csv_file, root_dir="dataset", rgb_folder="rgb", mask_folder="mask", image_size=(256, 256), transform=None):
         self.data_frame = pd.read_csv(csv_file)
         self.root_dir = root_dir

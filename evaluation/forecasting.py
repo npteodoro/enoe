@@ -1,6 +1,6 @@
 import torch
 from data.loaders.forecasting import ForecastingDataset
-from architectures.forecasting.forecasting_rnn import ForecastingCNN_GRU
+from architectures.forecasting.dual.attn_lstm import AttnLSTMDual
 import torchvision.transforms as transforms
 
 from jobs.evaluation import EvaluationStep
@@ -30,8 +30,6 @@ class EvaluationForecasting(EvaluationStep):
         self.dataset = ForecastingDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
-            rgb_folder=self.config_dataset.get("rgb_folder"),
-            time_window=self.config_dataset.get("time_window"),
             transform=self.transform
         )
 
@@ -39,12 +37,7 @@ class EvaluationForecasting(EvaluationStep):
         """
         Initialize the model configuration.
         """
-        model = ForecastingCNN_GRU(
-            cnn_output_size=self.config_model.get("cnn_output_size"),
-            gru_hidden_size=self.config_model.get("gru_hidden_size"),
-            gru_num_layers=self.config_model.get("gru_num_layers"),
-            output_size=self.config_model.get("output_size")
-        ).to(self.device)
+        model = AttnLSTMDual().to(self.device)
 
     def run_model(self):
 

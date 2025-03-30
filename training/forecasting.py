@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from data.loaders.forecasting import ForecastingDataset
-from architectures.forecasting.forecasting_rnn import ForecastingCNN_GRU
+from architectures.forecasting.dual.attn_lstm import AttnLSTMDual
 from jobs.training import TrainingStep
 
 class TrainingForecasting(TrainingStep):
@@ -19,7 +19,6 @@ class TrainingForecasting(TrainingStep):
         self.dataset = ForecastingDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
-            rgb_folder=self.config_dataset.get("rgb_folder"),
             time_window=self.config_dataset.get("time_window"),
             transform=self.transform
         )
@@ -31,11 +30,7 @@ class TrainingForecasting(TrainingStep):
         """
         Initialize the model configuration.
         """
-        self.model = ForecastingCNN_GRU(
-            cnn_output_size=self.config_model.get("cnn_output_size"),
-            gru_hidden_size=self.config_model.get("gru_hidden_size"),
-            gru_num_layers=self.config_model.get("gru_num_layers"),
-        ).to(self.device)
+        self.model = AttnLSTMDual().to(self.device)
 
     def run_model(self):
         """

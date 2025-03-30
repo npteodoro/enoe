@@ -21,8 +21,10 @@ class Step(ABC):
         self.config_model = config.get_model()
 
         self.encoder_name = config.get_encoder_name()
+        
+        print(f"Encoder name: {self.encoder_name}")
 
-        self.device = torch.device(self.config.get("device", "cuda") \
+        self.device = torch.device(self.config.get_config().get("device", "cuda") \
                                     if torch.cuda.is_available() else "cpu")
 
     def define_transform(self):
