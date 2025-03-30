@@ -27,6 +27,21 @@ class TrainingStep(Step):
         torch.save(self.model.state_dict(), os.path.join(model_dir, f"{self.encoder_name}.pth"))
         print("Training complete and model saved.")
 
+    def define_loss(self):
+        """
+        Define the loss function.
+        """
+        self.criterion = torch.nn.CrossEntropyLoss()
+
+    def define_optimizer(self):
+        """
+        Define the optimizer.
+        """
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(),
+            lr=self.config_training.get("learning_rate")
+        )
+
     def process(self):
 
         self.define_transform()
@@ -36,6 +51,10 @@ class TrainingStep(Step):
         self.define_dataloader()
 
         self.initialize_model()
+
+        self.define_loss()
+
+        self.define_optimizer()
 
         self.run_model()
 

@@ -57,10 +57,6 @@ class TrainingClassification(TrainingStep):
         """
         Run the model training.
         """
-        # Loss and optimizer
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config_training.get("learning_rate"))
-
         num_epochs = self.config_training.get("num_epochs")
         total_samples = len(self.dataloader.dataset)
         global_step = 0
@@ -71,41 +67,27 @@ class TrainingClassification(TrainingStep):
             correct = 0
 
             # Current code has incorrect unpacking - should handle masks too
-            if self.use_mask:
-                for (images, masks, labels) in self.dataloader:
-                    images = images.to(self.device)
+            for (images, masks, labels) in self.dataloader:
+                images = images.to(self.device)
+                if self.use_mask:
                     masks = masks.to(self.device)
-                    labels = labels.to(self.device)
+                labels = labels.to(self.device)
 
-                    optimizer.zero_grad()
+                self.optimizer.zero_grad()
+                if self.use_mask:
                     outputs = self.model(images, masks)  # Pass both images and masks
-                    loss = criterion(outputs, labels)
-                    loss.backward()
-                    optimizer.step()
-
-                    running_loss += loss.item() * images.size(0)
-                    _, preds = torch.max(outputs, 1)
-                    correct += torch.sum(preds == labels).item()
-
-                    self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
-                    global_step += 1
-            else:
-                for (images, _, labels) in self.dataloader:  # Ignore masks
-                    images = images.to(self.device)
-                    labels = labels.to(self.device)
-
-                    optimizer.zero_grad()
+                else:
                     outputs = self.model(images)
-                    loss = criterion(outputs, labels)
-                    loss.backward()
-                    optimizer.step()
+                loss = self.criterion(outputs, labels)
+                loss.backward()
+                self.optimizer.step()
 
-                    running_loss += loss.item() * images.size(0)
-                    _, preds = torch.max(outputs, 1)
-                    correct += torch.sum(preds == labels).item()
+                running_loss += loss.item() * images.size(0)
+                _, preds = torch.max(outputs, 1)
+                correct += torch.sum(preds == labels).item()
 
-                    self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
-                    global_step += 1
+                self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
+                global_step += 1
 
             epoch_loss = running_loss / total_samples
             epoch_acc = correct / total_samples

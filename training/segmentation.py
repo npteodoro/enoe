@@ -55,10 +55,6 @@ class TrainingSegmentation(TrainingStep):
         """
         Run the model on a sample batch.
         """
-        # Loss and optimizer
-        criterion = torch.nn.BCEWithLogitsLoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config_training.get("learning_rate"))
-
         num_epochs = self.config_training.get("num_epochs")
         total_samples = len(self.dataset)
         global_step = 0
@@ -69,11 +65,11 @@ class TrainingSegmentation(TrainingStep):
             for images, masks in self.dataloader:
                 images = images.to(self.device)
                 masks = masks.to(self.device)
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 outputs = self.model(images)  # [B, 1, H, W]
-                loss = criterion(outputs, masks)
+                loss = self.criterion(outputs, masks)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
                 running_loss += loss.item() * images.size(0)
                 self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
                 global_step += 1

@@ -41,9 +41,6 @@ class TrainingForecasting(TrainingStep):
         """
         Run the model training.
         """
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=self.config_training.get("learning_rate"))
-
         num_epochs = self.config_training.get("num_epochs")
         total_samples = len(self.dataloader.dataset)
         global_step = 0
@@ -53,11 +50,11 @@ class TrainingForecasting(TrainingStep):
             running_loss = 0.0
             for imgs, target in self.dataloader:
                 imgs, target = imgs.to(self.device), target.to(self.device)
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 outputs = self.model(imgs)  # outputs shape: [B, 1]
-                loss = criterion(outputs, target)
+                loss = self.criterion(outputs, target)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
                 running_loss += loss.item() * imgs.size(0)
                 self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
