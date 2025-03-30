@@ -8,6 +8,12 @@ from architectures.forecasting.forecasting_rnn import ForecastingCNN_GRU
 from utils.logger import init_logger
 from utils.config import load_config
 
+from jobs.base import Step
+
+class TrainingForecasting(Step):
+    def process(self, config, logger):
+        print("Model training for forecasting...")
+
 def main(config=None, writer=None, device=None):
 
     # Create forecasting dataloader

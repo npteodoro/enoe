@@ -8,6 +8,12 @@ from utils.logger import init_logger
 from utils.config import load_config
 import torchvision.transforms as transforms
 
+from jobs.base import Step
+
+class EvaluationForecasting(Step):
+    def process(self, config, logger):
+        print("Making forecasting with the trained model...")
+
 def main(config=None, writer=None, device=None):
 
     # Create forecasting dataset and dataloader

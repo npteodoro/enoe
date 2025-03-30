@@ -8,6 +8,12 @@ from data.loaders.classification import get_classification_dataloader
 from utils.logger import init_logger
 from utils.config import load_config
 
+from jobs.base import Step
+
+class EvaluationClassification(Step):
+    def process(self, config, logger):
+        print("Classifying data with the trained model...")
+
 def main(config=None, writer=None, device=None):
 
     # Extract model configuration details

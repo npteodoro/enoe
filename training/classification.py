@@ -9,6 +9,12 @@ from utils.logger import init_logger
 from utils.config import load_config
 import torchvision.transforms as transforms
 
+from jobs.base import Step
+
+class TrainingClassification(Step):
+    def process(self, config, logger):
+        print("Model training for classification...")
+
 def main(config=None, writer=None, device=None):
 
     # Get model config details
