@@ -9,6 +9,12 @@ from utils.evaluation_metrics import iou_score, dice_loss
 from utils.logger import init_logger
 from utils.config import load_config, get_model_config
 
+from jobs.base import Step
+
+class EvaluationSegmentation(Step):
+    def process(self, config, logger):
+        print("Segmenting data with the trained model...")
+
 def main(config=None, writer=None, device=None):
 
     encoder_name, encoder_weights, in_channels, classes = get_model_config(config)
