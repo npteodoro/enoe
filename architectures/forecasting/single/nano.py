@@ -9,7 +9,7 @@ class NanoSingle(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d(1)
         )
-        
+
         self.temp = nn.Sequential(
             nn.Conv1d(12+1, 16, 3),  # 12(rgb)+1(time)
             nn.ReLU(),

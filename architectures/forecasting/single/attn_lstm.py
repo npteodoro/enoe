@@ -15,7 +15,7 @@ class AttnLSTMSingle(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d(1)
         )
-        
+
         self.lstm = nn.LSTM(256+1, 384, batch_first=True)  # Compensate no mask
         self.attn = nn.Sequential(
             nn.Linear(384, 192),
@@ -28,7 +28,7 @@ class AttnLSTMSingle(nn.Module):
         batch, seq = x.shape[:2]
         rgb_feats = self.rgb_enc(x.view(-1,3,128,128)).view(batch, seq, -1)
         combined = torch.cat([rgb_feats, t.unsqueeze(-1)], -1)
-        
+
         lstm_out, _ = self.lstm(combined)
         attn_weights = F.softmax(self.attn(lstm_out), dim=1)
         context = torch.sum(attn_weights * lstm_out, dim=1)

@@ -82,6 +82,10 @@ class ConfigLoader:
         """Set the encoder name."""
         self.encoder_name = encoder_name
 
+    def set_model_architecture(self, architecture):
+        """Set the architecture."""
+        self.config["model"]["architecture"] = architecture
+
     @require_config
     def get_log_dir(self):
         """Return the log directory."""
