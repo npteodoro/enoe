@@ -22,6 +22,12 @@ def parse_arguments():
         choices=valid_steps,
         help=f"The type of step to execute. Valid options: {', '.join(valid_steps)}."
     )
+    parser.add_argument(
+        "--encoder-name",
+        type=str,
+        default=None,
+        help="The name of the encoder to use. Default is 'default_encoder'."
+    )
 
     # Parse arguments
     return parser.parse_args()
@@ -31,10 +37,10 @@ def main():
     args = parse_arguments()
 
     # Load configuration
-    config = ConfigLoader(job=args.job, step=args.step)
-    if config is None:
-        print("Error: Configuration loading failed.")
-        return
+    config = ConfigLoader()
+    config.load(job=args.job, step=args.step)
+    if args.encoder_name:
+        config.set_encoder_name(args.encoder_name)
 
     # Initialize logger
     logger = Logger(config=config)

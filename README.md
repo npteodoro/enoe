@@ -54,7 +54,7 @@ pip install -r requirements.txt
 Execute a job with a specific step:
 
 ```bash
-python enoe.py training segmentation
+python enoe.py training segmentation --encoder-name timm-mobilenetv3_large_100
 ```
 
 # Configuration

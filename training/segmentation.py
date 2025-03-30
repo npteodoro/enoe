@@ -10,81 +10,122 @@ import torchvision.transforms as transforms
 from jobs.base import Step
 
 class TrainingSegmentation(Step):
-    def process(self, config, logger):
-        encoder_name, encoder_weights, in_channels, classes = config.get_model_config()
 
-        # Create dataset and dataloader
-        dataset_config = config.get_dataset()
-        transform = transforms.Compose([
-            transforms.Resize(tuple(dataset_config["image_size"])),
+    def __init__(self, config, logger):
+        """
+        Initialize the TrainingSegmentation step with configuration and logger.
+        """
+        super().__init__(config, logger)
+
+    def define_transform(self):
+        """
+        Define the transformations for the dataset.
+        """
+        self.transform = transforms.Compose([
+            transforms.Resize(tuple(self.config_dataset["image_size"])),
             transforms.ToTensor(),
         ])
-        dataset = RiverSegmentationDataset(
-            csv_file=dataset_config["csv_file"],
-            root_dir=dataset_config["root_dir"],
-            rgb_folder=dataset_config.get("rgb_folder", "rgb"),
-            mask_folder=dataset_config.get("mask_folder", "mask"),
-            image_size=tuple(dataset_config["image_size"]),
-            transform=transform
+
+    def define_dataset(self):
+        """
+        Define the dataset configuration.
+        """
+        self.dataset = RiverSegmentationDataset(
+            csv_file=self.config_dataset["csv_file"],
+            root_dir=self.config_dataset["root_dir"],
+            rgb_folder=self.config_dataset.get("rgb_folder", "rgb"),
+            mask_folder=self.config_dataset.get("mask_folder", "mask"),
+            image_size=tuple(self.config_dataset["image_size"]),
+            transform=self.transform
         )
-        dataloader = DataLoader(
-            dataset,
-            batch_size=config.get_training()["batch_size"],
+
+    def define_dataloader(self):
+        """
+        Define the dataloader configuration.
+        """
+        self.dataloader = DataLoader(
+            self.dataset,
+            batch_size=self.config_training["batch_size"],
             shuffle=True,
-            num_workers=config.get_training()["num_workers"]
+            num_workers=self.config_training["num_workers"]
         )
 
-        # Initialize model
-        model = get_unet_mobilenet_v3(
-            in_channels=in_channels,
-            classes=classes,
-            encoder_name=encoder_name,
-            encoder_weights=encoder_weights
+    def initialize_model(self):
+        """
+        Initialize the model configuration.
+        """
+        self.model = get_unet_mobilenet_v3(
+            in_channels=self.config_model.get("in_channels", 3),
+            classes=self.config_model.get("classes", 1),
+            encoder_name=self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
+            encoder_weights=self.config_model.get("encoder_weights", "imagenet")
         )
-        model = model.to(config.get_device())
+        self.model = self.model.to(self.device)
 
+    def save_model(self):
+        """
+        Save model checkpoint in a subfolder for the current encoder
+        """
+        model_dir = os.path.join(self.config.get_root_dir(), "models", "segmentation", self.encoder_name)
+        os.makedirs(model_dir, exist_ok=True)
+        torch.save(self.model.state_dict(), os.path.join(model_dir, f"{self.encoder_name}.pth"))
+        print("Training complete and model saved.")
+
+    def run_model(self):
+        """
+        Run the model on a sample batch.
+        """
         # Loss and optimizer
         criterion = torch.nn.BCEWithLogitsLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=config.get_training()["learning_rate"])
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config_training["learning_rate"])
 
-        num_epochs = config.get_training()["num_epochs"]
-        total_samples = len(dataset)
+        num_epochs = self.config_training["num_epochs"]
+        total_samples = len(self.dataset)
         global_step = 0
 
         for epoch in range(num_epochs):
-            model.train()
+            self.model.train()
             running_loss = 0.0
-            for images, masks in dataloader:
-                images = images.to(config.get_device())
-                masks = masks.to(config.get_device())
+            for images, masks in self.dataloader:
+                images = images.to(self.device)
+                masks = masks.to(self.device)
                 optimizer.zero_grad()
-                outputs = model(images)  # [B, 1, H, W]
+                outputs = self.model(images)  # [B, 1, H, W]
                 loss = criterion(outputs, masks)
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item() * images.size(0)
-                logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
+                self.logger.add_scalar("Train/BatchLoss", loss.item(), global_step)
                 global_step += 1
 
             epoch_loss = running_loss / total_samples
 
             # Evaluate on a small validation batch (using training data here for simplicity)
-            model.eval()
+            self.model.eval()
             with torch.no_grad():
-                sample_images, sample_masks = next(iter(dataloader))
-                sample_images = sample_images.to(config.get_device())
-                sample_masks = sample_masks.to(config.get_device())
-                sample_outputs = torch.sigmoid(model(sample_images))
+                sample_images, sample_masks = next(iter(self.dataloader))
+                sample_images = sample_images.to(self.device)
+                sample_masks = sample_masks.to(self.device)
+                sample_outputs = torch.sigmoid(self.model(sample_images))
                 iou = iou_score(sample_outputs, sample_masks)
                 dice = dice_loss(sample_outputs, sample_masks)
 
-            logger.add_scalar("Train/EpochLoss", epoch_loss, epoch)
-            logger.add_scalar("Train/IoU", iou, epoch)
-            logger.add_scalar("Train/DiceLoss", dice, epoch)
+            self.logger.add_scalar("Train/EpochLoss", epoch_loss, epoch)
+            self.logger.add_scalar("Train/IoU", iou, epoch)
+            self.logger.add_scalar("Train/DiceLoss", dice, epoch)
             print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, IoU: {iou:.4f}, Dice Loss: {dice:.4f}")
 
-        # Save model checkpoint in a subfolder for the current encoder
-        model_dir = os.path.join(config.get_root_dir(), "models", "segmentation", encoder_name)
-        os.makedirs(model_dir, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(model_dir, f"{encoder_name}.pth"))
-        print("Training complete and model saved.")
+            self.save_model()
+
+    def process(self):
+
+        # Create dataset and dataloader
+        self.define_transform()
+
+        self.define_dataset()
+
+        self.define_dataloader()
+
+        self.initialize_model()
+
+        self.run_model()

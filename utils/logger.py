@@ -43,17 +43,17 @@ class Logger:
         """
         self.writer.close()
 
-    def add_scalar(self, tag, value, step):
+    def add_scalar(self, *args, **kwargs):
         """
         Adds a scalar value to the TensorBoard log.
         """
-        self.writer.add_scalar(tag, value, step)
+        self.writer.add_scalar(*args, **kwargs)
 
-    def add_text(self, tag, text, step):
+    def add_text(self, *args, **kwargs):
         """
         Adds a text entry to the TensorBoard log.
         """
-        self.writer.add_text(tag, text, step)
+        self.writer.add_text(*args, **kwargs)
 
 def log_config(writer, config):
     """Logs the configuration dictionary as text."""
