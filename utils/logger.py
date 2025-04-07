@@ -11,8 +11,8 @@ class Logger:
 
         self.log_dir = os.path.join(
             self.config.get_log_dir(),
-            self.config.get_job(),
             self.config.get_step(),
+            self.config.get_job(),
             self.config.get_encoder_name()
         )
 

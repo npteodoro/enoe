@@ -70,7 +70,7 @@ class TrainingSegmentation(TrainingStep):
         print(f"total_samples: {total_samples}")
         print(f"learning_rate: {self.config_training.get("learning_rate")}")
         print(f"project_root: {self.config.get_root_dir()}")
-        print(f"log_dir: {self.config.get_log_dir()}")
+        print(f"log_dir: {self.logger.log_dir}")
 
         global_step = 0
 
