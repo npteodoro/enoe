@@ -36,20 +36,14 @@ class TrainingSegmentation(TrainingStep):
             transform=self.transform
         )
 
+    def define_loss(self):
+        """
+        Define the loss function.
+        """
+        self.criterion = torch.nn.BCEWithLogitsLoss()
+
     def define_dataloader(self):
         super().define_dataloader(shuffle=True)
-
-    # def initialize_model(self):
-    #     """
-    #     Initialize the model configuration.
-    #     """
-    #     self.model = get_unet_mobilenet_v3(
-    #         in_channels=self.config_model.get("in_channels", 3),
-    #         classes=self.config_model.get("classes", 1),
-    #         encoder_name=self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
-    #         encoder_weights=self.config_model.get("encoder_weights", "imagenet")
-    #     )
-    #     self.model = self.model.to(self.device)
 
     def run_model(self):
         """

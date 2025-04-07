@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 import torchvision.transforms as transforms
 
 # from architectures.classification.classifier_dual_input import get_dual_input_model
@@ -42,15 +41,11 @@ class TrainingClassification(TrainingStep):
             mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None
         )
 
-    # def initialize_model(self):
-    #     """
-    #     Initialize the model configuration.
-    #     """
-    #     self.model = get_dual_input_model(
-    #         backbone_name=self.config_model.get("backbone_name", "shufflenet"),
-    #         num_classes=self.config_model.get("num_classes", 4),  # e.g., 4 classes: low, medium, high, floo,
-    #         pretrained=True
-    #     ).to(self.device)
+    def define_loss(self):
+        """
+        Define the loss function.
+        """
+        self.criterion = torch.nn.CrossEntropyLoss()
 
     def run_model(self):
         """

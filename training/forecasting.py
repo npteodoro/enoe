@@ -1,5 +1,4 @@
-import torch.nn as nn
-import torch.optim as optim
+import torch
 
 from data.loaders.forecasting import ForecastingDataset
 from architectures.forecasting.dual.attn_lstm import AttnLSTMDual
@@ -26,11 +25,11 @@ class TrainingForecasting(TrainingStep):
     def define_dataloader(self):
         super().define_dataloader(shuffle=True)
 
-    # def initialize_model(self):
-    #     """
-    #     Initialize the model configuration.
-    #     """
-    #     self.model = AttnLSTMDual().to(self.device)
+    def define_loss(self):
+        """
+        Define the loss function.
+        """
+        self.criterion = torch.nn.CrossEntropyLoss()
 
     def run_model(self):
         """

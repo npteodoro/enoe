@@ -31,7 +31,7 @@ class TrainingStep(Step):
         """
         Define the loss function.
         """
-        self.criterion = torch.nn.CrossEntropyLoss()
+        pass
 
     def define_optimizer(self):
         """
