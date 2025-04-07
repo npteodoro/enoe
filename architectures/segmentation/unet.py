@@ -13,3 +13,8 @@ class SmpUnetMobileNetV3(smp.Unet):
                          encoder_weights=encoder_weights,
                          in_channels=in_channels,
                          classes=classes)
+
+        # print(f"Model initialized with encoder: {encoder_name}")
+        # print(f"Model initialized with Encoder weights: {encoder_weights}")
+        # print(f"Model initialized with In channels: {in_channels}")
+        # print(f"Model initialized with Classes: {classes}")

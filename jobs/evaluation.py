@@ -38,6 +38,8 @@ class EvaluationStep(Step):
 
         self.define_dataloader()
 
+        self.define_model_parameters()
+
         self.initialize_model()
 
         self.load_model()

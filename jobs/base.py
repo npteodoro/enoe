@@ -51,6 +51,12 @@ class Step(ABC):
             shuffle=shuffle
         )
 
+    def define_model_parameters(self):
+        """
+        Define the model parameters.
+        """
+        self.model_parameters = {}
+
     def initialize_model(self):
         """
         Dynamically initialize the model based on the class name provided in the configuration.
@@ -67,7 +73,7 @@ class Step(ABC):
             raise ImportError(f"Could not import model class '{architecture}': {e}")
 
         # Initialize the model
-        self.model = model_class().to(self.device)
+        self.model = model_class(**self.model_parameters).to(self.device)
 
     def run_model(self):
         """
