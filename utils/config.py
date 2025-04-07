@@ -78,6 +78,11 @@ class ConfigLoader:
         """Return the encoder name."""
         return self.encoder_name
 
+    @require_config
+    def get_log_dir(self):
+        """Return the log directory."""
+        return self.log_dir
+
     def set_encoder_name(self, encoder_name):
         """Set the encoder name."""
         self.encoder_name = encoder_name
@@ -86,7 +91,32 @@ class ConfigLoader:
         """Set the architecture."""
         self.config["model"]["architecture"] = architecture
 
-    @require_config
-    def get_log_dir(self):
-        """Return the log directory."""
-        return self.log_dir
+    def set_parameter(self, key_path, value):
+        """
+        Set a parameter in the configuration using a key path.
+        Example: key_path="dataset.csv_file", value="file.csv"
+        """
+        print(f"Setting parameter '{key_path}' to '{value}'")
+        keys = key_path.split(".")
+        config_section = self.config
+
+        # Traverse the nested dictionary to the last key
+        for key in keys[:-1]:
+            if key not in config_section:
+                config_section[key] = {}  # Create nested dictionaries if they don't exist
+            config_section = config_section[key]
+
+        # Attempt to convert the value to float, int, or leave as string
+        final_key = keys[-1]
+        try:
+            # Try to convert to float
+            value = float(value)
+            # If it can be converted to float but is an integer (e.g., 5.0), convert to int
+            if value.is_integer():
+                value = int(value)
+        except ValueError:
+            # If conversion to float fails, leave as string
+            pass
+
+        # Set the value at the final key
+        config_section[final_key] = value

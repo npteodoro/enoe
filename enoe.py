@@ -34,6 +34,11 @@ def parse_arguments():
         default=None,
         help="The architecture to use. Default is configs/config.yaml."
     )
+    parser.add_argument(
+        "--set", "-s",
+        action="append",
+        help="Set additional parameters in the format key=value. Multiple parameters can be passed."
+    )
 
     # Parse arguments
     return parser.parse_args()
@@ -49,6 +54,10 @@ def main():
         config.set_encoder_name(args.encoder_name)
     if args.architecture:
         config.set_model_architecture(args.architecture)
+    if args.set:
+        for param in args.set:
+            key, value = param.split("=")
+            config.set_parameter(key, value)
 
     # Initialize logger
     logger = Logger(config=config)
