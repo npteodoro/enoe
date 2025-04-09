@@ -5,7 +5,6 @@ from jobs.base import Step
 
 class Evaluation(Job):
     def execute(self, step):
-        print(f"[Evaluation] Executing {step.__class__.__name__}")
         step.process()
 
 class EvaluationStep(Step):
@@ -21,14 +20,18 @@ class EvaluationStep(Step):
         """
         model_path = os.path.join(self.config.get_root_dir(), "models", self.config.get_step(),
                                   self.encoder_name, f"{self.encoder_name}.pth")
+        print(f"Loading model from {model_path}...")
 
         if not os.path.exists(model_path):
             print(f"Error: Model file not found at {model_path}")
             print(f"Please train the model with encoder '{self.encoder_name}' first.")
             return
 
+        print(f"load_state_dict")
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        print("eval")
         self.model.eval()
+        print("eval ok")
 
     def process(self):
 
