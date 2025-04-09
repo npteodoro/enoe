@@ -6,7 +6,6 @@ from jobs.base import Step
 
 class Training(Job):
     def execute(self, step):
-        print(f"[Training] Executing {step.__class__.__name__}")
         step.process()
 
 class TrainingStep(Step):
@@ -25,7 +24,7 @@ class TrainingStep(Step):
                                  self.config.get_step(), self.encoder_name)
         os.makedirs(model_dir, exist_ok=True)
         torch.save(self.model.state_dict(), os.path.join(model_dir, f"{self.encoder_name}.pth"))
-        print("Training complete and model saved.")
+        print(f"Training complete and model saved in {model_dir}")
 
     def define_loss(self):
         """
@@ -37,6 +36,8 @@ class TrainingStep(Step):
         """
         Define the optimizer.
         """
+        print("Define Optimizer")
+        print(f"  learning rate: {self.config_training.get('learning_rate')}")
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             lr=self.config_training.get("learning_rate")

@@ -23,8 +23,6 @@ class Step(ABC):
 
         self.encoder_name = config.get_encoder_name()
 
-        print(f"Encoder name: {self.encoder_name}")
-
         self.device = torch.device(self.config.get_config().get("device", "cuda") \
                                     if torch.cuda.is_available() else "cpu")
 
@@ -44,10 +42,18 @@ class Step(ABC):
         """
         Define the dataloader configuration.
         """
+        _batch_size = batch_size or self.config_training.get("batch_size", 4)
+        _num_workers = num_workers or self.config_training.get("num_workers", 2)
+
+        print("Define DataLoader")
+        print(f"  batch size: {_batch_size}")
+        print(f"  num workers: {_num_workers}")
+        print(f"  shuffle: {shuffle}")
+
         self.dataloader = DataLoader(
             self.dataset,
-            batch_size=batch_size or self.config_training.get("batch_size", 4),
-            num_workers=num_workers or self.config_training.get("num_workers", 2),
+            batch_size=_batch_size,
+            num_workers=_num_workers,
             shuffle=shuffle
         )
 
@@ -62,7 +68,6 @@ class Step(ABC):
         Dynamically initialize the model based on the class name provided in the configuration.
         """
         architecture = f"architectures.{self.config.get_step()}.{self.config_model.get("architecture")}"
-        print(f"Model architecture: {architecture}")
 
         # Dynamically import the model class
         module_name, class_name = architecture.rsplit(".", 1)
@@ -73,6 +78,9 @@ class Step(ABC):
             raise ImportError(f"Could not import model class '{architecture}': {e}")
 
         # Initialize the model
+        print("Initialize Model")
+        print(f"  architecture: {architecture}")
+        print(f"  parameters: {self.model_parameters}")
         self.model = model_class(**self.model_parameters).to(self.device)
 
     def run_model(self):

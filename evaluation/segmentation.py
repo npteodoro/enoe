@@ -21,6 +21,8 @@ class EvaluationSegmentation(EvaluationStep):
         """
         Define the transformations for the dataset.
         """
+        print("Define Transform")
+        print(f"  image size: {self.config_dataset.get('image_size')}")
         self.transform = transforms.Compose([
             transforms.Resize(tuple(self.config_dataset.get("image_size"))),
             transforms.ToTensor(),
@@ -30,6 +32,12 @@ class EvaluationSegmentation(EvaluationStep):
         """
         Define the dataset configuration.
         """
+        print("Define Dataset")
+        print(f"  root dir: {self.config_dataset.get('root_dir')}")
+        print(f"  csv file: {self.config_dataset.get('csv_file')}")
+        print(f"  rgb folder: {self.config_dataset.get('rgb_folder', 'rgb')}")
+        print(f"  mask folder: {self.config_dataset.get('mask_folder', 'mask')}")
+        print(f"  image size: {self.config_dataset.get('image_size')}")
         self.dataset = SegmentationDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
@@ -39,22 +47,12 @@ class EvaluationSegmentation(EvaluationStep):
             transform=self.transform
         )
 
-    # def initialize_model(self):
-    #     """
-    #     Initialize the model configuration.
-    #     """
-    #     self.model = get_unet_mobilenet_v3(
-    #         in_channels=self.config_model.get("in_channels", 3),
-    #         classes=self.config_model.get("classes", 1),
-    #         encoder_name=self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
-    #         encoder_weights=self.config_model.get("encoder_weights", "imagenet")
-    #     ).to(self.device)
-
     def run_model(self):
         """
         Run the model on a sample batch.
         """
 
+        print("Run Model")
         total_iou = 0.0
         total_dice = 0.0
         num_batches = 0
