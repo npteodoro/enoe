@@ -15,7 +15,6 @@ class TrainingStep(Step):
         """
         super().__init__(config, logger)
 
-
     def save_model(self):
         """
         Save model checkpoint in a subfolder for the current encoder

@@ -1,5 +1,5 @@
-from efficientnet_pytorch import EfficientNet
 import torch.nn as nn
+from efficientnet_pytorch import EfficientNet
 
 class SingleEfficientNetB0(nn.Module):
     def __init__(self, num_classes=4):

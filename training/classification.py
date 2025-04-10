@@ -23,6 +23,8 @@ class TrainingClassification(TrainingStep):
         """
         Define the transformations for the dataset.
         """
+        print("Define Transform")
+        print(f"  image size: {self.config_dataset.get('image_size')}")
         self.transform = transforms.Compose([
             transforms.Resize(tuple(self.config_dataset.get("image_size"))),
             transforms.ToTensor(),
@@ -34,6 +36,12 @@ class TrainingClassification(TrainingStep):
         """
         Define the dataset configuration.
         """
+        print("Define Dataset")
+        print(f"  csv_file: {self.config_dataset.get('csv_file')}")
+        print(f"  root_dir: {self.config_dataset.get('root_dir')}")
+        print(f"  rgb_folder: {self.config_dataset.get('rgb_folder', "rgb")}")
+        print(f"  use_mask: {self.use_mask}")
+        print(f"  mask_folder: {self.config_dataset.get('mask_folder', "mask") if self.use_mask else None}")
         self.dataset = ClassificationDataset(
             csv_file=self.config_dataset.get("csv_file"),
             root_dir=self.config_dataset.get("root_dir"),
@@ -46,6 +54,9 @@ class TrainingClassification(TrainingStep):
         Define the loss function.
         """
         self.criterion = torch.nn.CrossEntropyLoss()
+        print("Define Loss")
+        print(f"  criterion: {self.criterion}")
+
 
     def train(self):
         """
@@ -54,6 +65,10 @@ class TrainingClassification(TrainingStep):
         num_epochs = self.config_training.get("num_epochs")
         total_samples = len(self.dataloader.dataset)
         global_step = 0
+
+        print("Train classification")
+        print(f"  num epochs: {num_epochs}")
+        print(f"  total samples: {total_samples}")
 
         for epoch in range(num_epochs):
             self.model.train()

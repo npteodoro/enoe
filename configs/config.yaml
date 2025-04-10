@@ -13,7 +13,9 @@ classification:
     learning_rate: 0.0001
 
   model:
-    architecture: single.mobilenetv3.SingleMobileNet
+    # architecture: dual.shufflenetv2.DualShuffleNetV2
+    # architecture: dual.mobilenetv3.DualMobileNet
+    architecture: dual.efficientnetb0.DualEfficientNetB0
     encoder_name: dual_input_classifier
     backbone_name: shufflenet  # or mobilenet
     num_classes: 4
