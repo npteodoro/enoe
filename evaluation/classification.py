@@ -36,17 +36,7 @@ class EvaluationClassification(EvaluationStep):
             mask_folder=self.config_dataset.get("mask_folder", "mask") if self.use_mask else None
         )
 
-    # def initialize_model(self):
-    #     """
-    #     Load the model weights from the specified path.
-    #     """
-    #     self.model = get_dual_input_model(
-    #         backbone_name=self.config_model.get("backbone_name", "shufflenet"),
-    #         num_classes=self.config_model.get("num_classes", 4),
-    #         pretrained=False
-    #     ).to(self.device)
-
-    def run_model(self):
+    def evaluate(self):
 
         total_correct = 0
         total_samples = 0

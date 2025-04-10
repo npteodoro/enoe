@@ -33,13 +33,7 @@ class EvaluationForecasting(EvaluationStep):
             transform=self.transform
         )
 
-    # def initialize_model(self):
-    #     """
-    #     Initialize the model configuration.
-    #     """
-    #     model = AttnLSTMDual().to(self.device)
-
-    def run_model(self):
+    def evaluate(self):
 
         total_error = 0.0
         total_samples = 0

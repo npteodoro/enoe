@@ -66,14 +66,14 @@ class TrainingSegmentation(TrainingStep):
             "classes": self.config_model.get("classes", 1)
         }
 
-    def run_model(self):
+    def train(self):
         """
         Run the model on a sample batch.
         """
         num_epochs = self.config_training.get("num_epochs")
         total_samples = len(self.dataset)
 
-        print("Run Model")
+        print("Train segmentation")
         print(f"  num epochs: {num_epochs}")
         print(f"  total samples: {total_samples}")
 

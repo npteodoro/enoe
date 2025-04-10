@@ -83,6 +83,11 @@ class ConfigLoader:
         """Return the log directory."""
         return self.log_dir
 
+    @require_config
+    def get_model_path(self):
+        """Return the log directory."""
+        return os.path.join(self.root_dir, "models", self.step, f"{self.encoder_name}.pth")
+
     def set_encoder_name(self, encoder_name):
         """Set the encoder name."""
         self.encoder_name = encoder_name

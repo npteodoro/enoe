@@ -20,11 +20,10 @@ class TrainingStep(Step):
         """
         Save model checkpoint in a subfolder for the current encoder
         """
-        model_dir = os.path.join(self.config.get_root_dir(), "models",
-                                 self.config.get_step(), self.encoder_name)
-        os.makedirs(model_dir, exist_ok=True)
-        torch.save(self.model.state_dict(), os.path.join(model_dir, f"{self.encoder_name}.pth"))
-        print(f"Training complete and model saved in {model_dir}")
+        model_path = self.config.get_model_path()
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        torch.save(self.model.state_dict(), model_path)
+        print(f"Training complete and model saved in {model_path}")
 
     def define_loss(self):
         """
@@ -42,6 +41,9 @@ class TrainingStep(Step):
             self.model.parameters(),
             lr=self.config_training.get("learning_rate")
         )
+
+    def train(self):
+        pass
 
     def process(self):
 
@@ -61,4 +63,4 @@ class TrainingStep(Step):
 
         self.run_model()
 
-        self.save_model()
+        self.train()

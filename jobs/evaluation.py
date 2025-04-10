@@ -18,20 +18,19 @@ class EvaluationStep(Step):
         """
         Load the model weights from the specified path.
         """
-        model_path = os.path.join(self.config.get_root_dir(), "models", self.config.get_step(),
-                                  self.encoder_name, f"{self.encoder_name}.pth")
+        model_path = self.config.get_model_path()
         print(f"Loading model from {model_path}...")
 
         if not os.path.exists(model_path):
             print(f"Error: Model file not found at {model_path}")
             print(f"Please train the model with encoder '{self.encoder_name}' first.")
-            return
+            exit(-1)
 
-        print(f"load_state_dict")
         self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        print("eval")
         self.model.eval()
-        print("eval ok")
+
+    def evaluate(self):
+        pass
 
     def process(self):
 
@@ -47,4 +46,4 @@ class EvaluationStep(Step):
 
         self.load_model()
 
-        self.run_model()
+        self.evaluate()

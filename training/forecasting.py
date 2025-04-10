@@ -31,7 +31,7 @@ class TrainingForecasting(TrainingStep):
         """
         self.criterion = torch.nn.CrossEntropyLoss()
 
-    def run_model(self):
+    def train(self):
         """
         Run the model training.
         """

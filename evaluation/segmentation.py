@@ -47,12 +47,23 @@ class EvaluationSegmentation(EvaluationStep):
             transform=self.transform
         )
 
-    def run_model(self):
+    def define_model_parameters(self):
+        """
+        Define the model parameters.
+        """
+        self.model_parameters = {
+            "encoder_name": self.config_model.get("encoder_name", "timm-mobilenetv3_small_100"),
+            "encoder_weights": self.config_model.get("encoder_weights", "imagenet"),
+            "in_channels": self.config_model.get("in_channels", 3),
+            "classes": self.config_model.get("classes", 1)
+        }
+
+    def evaluate(self):
         """
         Run the model on a sample batch.
         """
 
-        print("Run Model")
+        print("Evaluate segmentation")
         total_iou = 0.0
         total_dice = 0.0
         num_batches = 0
